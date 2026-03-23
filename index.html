@@ -392,11 +392,11 @@ function render(){
   dc();const r=$('#app');r.innerHTML='';
   r.appendChild(h('div',{class:'header'},h('h1',null,'Fairway IQ'),h('span',null,'golf performance lab')));
   const tb=h('div',{class:'tabs'});
-  [['courses','Courses'],['play','Play'],['analysis','Analysis'],['scores','Scores'],['rounds','Rounds']].forEach(([id,l])=>
+  [['courses','Courses'],['play','Play'],['analysis','Analysis'],['scores','Scores'],['goals','Goals'],['rounds','Rounds']].forEach(([id,l])=>
     tb.appendChild(h('button',{class:'tab'+(S.tab===id?' active':''),onClick:()=>{S.tab=id;render()}},l)));
   r.appendChild(tb);
   const c=h('div',{class:'fi'});
-  ({courses:rC,play:rP,analysis:rA,scores:rScores,rounds:rR})[S.tab](c);
+  ({courses:rC,play:rP,analysis:rA,scores:rScores,goals:rGoals,rounds:rR})[S.tab](c);
   r.appendChild(c);
   const dm=h('div',{class:'dm'});
   dm.append(h('button',{class:'btn s',onClick:xp},'Export'),h('button',{class:'btn s',onClick:()=>$('#fi').click()},'Import'),
@@ -746,6 +746,212 @@ function rH(el){if(S.rounds.length<2)return;el.appendChild(h('div',{class:'st',s
       h('div',{style:{textAlign:'center'}},s.fwP+'%'),h('div',{style:{textAlign:'center'}},s.girP+'%'),
       h('div',{style:{textAlign:'center',fontWeight:600,color:scoreColor100(sc2.overall)}},sc2.overall!==null?String(sc2.overall):'—')))});
   el.appendChild(cd)}
+
+// ─── GOALS & DRILLS ───────────────────
+const DRILL_DB={
+  driving_slice:{title:'Fix the slice',area:'Driving',drill:'Headcover drill: place a headcover 6 inches outside the ball on the target line. An outside-in swing path will hit it. Practice swinging inside-out to miss the headcover. 20 swings, then hit 10 balls.',source:'Split-hand grip drill (Rory McIlroy): grip the club with hands 3 inches apart. Make half swings feeling trail arm tuck under. This squares the face through impact.',freq:'2x per week, 15 min'},
+  driving_hook:{title:'Tame the hook',area:'Driving',drill:'Alignment stick drill: place a stick on target line. Set up with clubface aimed at the stick, feet slightly open. Practice hitting controlled fades by holding the face angle through impact. The feel is "hold off the release."',source:'Weakened trail hand grip reduces face closure. Turn trail hand counterclockwise 1 knuckle on the grip.',freq:'2x per week, 15 min'},
+  driving_accuracy:{title:'Find more fairways',area:'Driving',drill:'Fairway corridor challenge: pick two targets 30 yards apart on the range. Hit 20 drives — score 3 pts for driver in corridor, 2 for fairway wood, 1 for hybrid. Track your score weekly. Also try: tee it lower and move ball back 1 inch in stance for a more penetrating flight with less side spin.',source:'Tempo training: use a metronome app at 72-76 BPM. Backswing on beat 1, downswing on beat 2. 3:1 backswing-to-downswing ratio.',freq:'Every range session, 10 min'},
+  driving_distance:{title:'Add distance off the tee',area:'Driving',drill:'Speed training: make 10 swings with a driver as fast as possible (no ball). Then hit 5 balls at 80% effort. The contrast trains your body to recruit more speed. Also: focus on ground force — push into lead foot to start downswing.',source:'Overspeed training with alignment stick or speed stick. Swing 3 sets of 5 as hard as possible.',freq:'3x per week, 10 min'},
+  iron_distance:{title:'Gain iron distance consistency',area:'Irons',drill:'Stock yardage drill: hit 10 balls with your target iron. Ignore the best 2 and worst 2. Average the middle 6 — that is your stock number. Write it down. Repeat for each iron. The key is knowing your REAL distances, not your best-case distances.',source:'Focus on striking the ball first, ground second. Place a tee 2 inches in front of the ball — your divot should start at the tee, not behind the ball.',freq:'1x per week per club, 10 min'},
+  iron_accuracy:{title:'Tighten iron dispersion',area:'Irons',drill:'9-shot drill (Hank Haney / Tiger Woods): hit low draw, low straight, low fade, mid draw, mid straight, mid fade, high draw, high straight, high fade. Start with 7 iron. This teaches face and path control. Even attempting it builds awareness.',source:'Alignment stick on ground parallel to target. Check ball position: 7i = center, 6i = 1 ball forward, 8i = 1 ball back. Consistent ball position = consistent contact.',freq:'1x per week, 20 min'},
+  iron_short_miss:{title:'Stop leaving irons short',area:'Irons',drill:'One-more-club rule: for 3 rounds, always take one more club than you think you need on every approach. Track results. Most amateurs underclub because they base distance on their best shot, not their average. PGA Tour proximity data shows even pros miss more short than long.',source:'Smooth 80% swings with one more club produce better contact and more consistent distance than 100% swings with the "right" club.',freq:'On course, every round for 3 rounds'},
+  shortgame_proximity:{title:'Get up and down more often',area:'Short game',drill:'3-level chip drill: from 15 yards, hit 10 low runners (8 iron), 10 medium pitches (PW), 10 high lobs (SW). All should finish within 6 feet. This builds touch across trajectories. The goal is to have 3 shots for every short game situation.',source:'Clock drill (Dave Pelz): backswing to 7:30, 9:00, and 10:30 positions with your SW. Measure how far each goes. These become your stock wedge distances.',freq:'2x per week, 20 min'},
+  shortgame_bunker:{title:'Improve bunker play',area:'Short game',drill:'Line-in-sand drill: draw a line in the sand where the ball would be. Practice hitting the sand 1-2 inches BEHIND the line, splashing through. Do 20 swings with no ball first to build confidence. Then add the ball. Open the clubface at address, not during the swing.',source:'Dollar bill drill: place a dollar bill (or piece of paper) in the bunker. Put ball on the front edge. Your goal is to remove the dollar bill from the sand — the ball rides out on the cushion of sand.',freq:'1x per week, 15 min'},
+  shortgame_distance_control:{title:'Wedge distance control',area:'Short game',drill:'Ladder drill: hit W56 to 30, 40, 50, 60, 70, 80 yards using different backswing lengths. Mark your landing spots. The key is controlling backswing length — not decelerating. Always accelerate through. Chart your stock distances for each wedge at each backswing length.',source:'Landing spot focus: pick a specific spot to land the ball, not where you want it to finish. Landing spot control is far more reliable than trying to control total distance.',freq:'2x per week, 15 min'},
+  putting_lag:{title:'Eliminate three-putts',area:'Putting',drill:'Ladder drill: set tees at 20, 25, 30, 35, 40 feet. Hit 5 balls from each distance — all must stop within 3 feet of the hole. If any ball is outside 3 feet, restart that distance. Focus on speed, not line. View the putt from the side to judge distance — most amateurs only read from behind.',source:'Fringe drill: putt from 30 feet to the FRINGE of the green. The ball should just trickle onto the fringe and stop. This calibrates your max speed — you now know the absolute furthest the ball can go with that stroke.',freq:'Before every round, 10 min'},
+  putting_short:{title:'Make more short putts',area:'Putting',drill:'Gate drill: place 2 tees just wider than your putter head, 5 feet from the hole. Make 10 in a row through the gate. If you miss, restart. This builds face angle control and confidence under pressure. Once you can do 5 ft, move to 6, 7, 8 feet.',source:'Clock drill: place 4 balls at 3 feet (12, 3, 6, 9 o\'clock). Make all 4. Move to 4 feet. Then 5 feet. If you miss, restart that distance. Builds routine and confidence on breaking putts.',freq:'2x per week, 15 min'},
+  putting_read:{title:'Better green reading',area:'Putting',drill:'Speed determines break: from 15 feet on a breaking putt, hit 3 balls — one firm (less break), one dying (max break), one medium. See how each speed changes the line. This teaches you that speed and line are connected. Most amateurs underread break because they hit putts too hard.',source:'Walk the full circle around your putt. Look at it from behind the hole too. Feel the slope with your feet. The lowest point tells you which way the ball will break.',freq:'On course, every round'},
+  course_mgmt_penalties:{title:'Eliminate penalty strokes',area:'Course management',drill:'Safe miss strategy: before every shot near a hazard, identify where the trouble is and aim to the opposite side. Accept that bogey is a good score from trouble — hero shots lead to doubles and triples. On the range, practice hitting your "bail-out" club (hybrid or 5 iron) to a safe target.',source:'Decision tree: Is there water/OB? If yes, what club guarantees you clear it? If you can\'t clear it 90% of the time, lay up. The math always favors the conservative play for amateurs.',freq:'On course, every round'},
+  course_mgmt_scoring:{title:'Better scoring decisions',area:'Course management',drill:'Par is your friend: on par 5s, your goal is the center of the green in 3, not the pin in 2. On tough par 4s, a fairway wood off the tee + full iron to the center of the green is a better play than driver into trouble. Track your score on "conservative strategy" rounds vs. "aggressive" rounds.',source:'Aim for the fat part of the green on approaches, not the flag. PGA Tour pros aim at the flag only 30% of the time — they aim center-green most of the time.',freq:'On course strategy'},
+  shape_slice:{title:'Fix the slice pattern',area:'Shot shape',drill:'Inside-out path drill: place an alignment stick 6 inches outside the ball, angled 30 degrees right of target (for right-handers). Swing so the club exits RIGHT of the stick. This forces an inside-out path. Start with half swings and a 7 iron.',source:'Strong grip check: you should see 2.5 to 3 knuckles on your lead hand at address. If you see fewer, your grip is too weak and promotes an open face.',freq:'3x per week, 15 min'},
+  shape_hook:{title:'Fix the hook pattern',area:'Shot shape',drill:'Hold-off release drill: hit half shots with a 7 iron where the toe of the club does NOT pass the heel through impact. Feel like the face stays pointing at the target longer. This reduces excessive face closure.',source:'Weaken the trail hand grip slightly — rotate it counterclockwise on the grip. Also check ball position — too far back promotes an in-to-out path that exaggerates hooks.',freq:'2x per week, 15 min'},
+};
+
+function analyzeGoals(){
+  if(!S.rounds.length)return{areas:[],clubWeaknesses:[],missPatterns:[]};
+  const allScored=S.rounds.map(r=>scoreRound(r));
+  const allAnalyzed=S.rounds.map(r=>analyze(r));
+
+  // Aggregate category scores
+  const catTotals={driving:{scores:[],count:0},irons:{scores:[],count:0},shortGame:{scores:[],count:0},putting:{scores:[],count:0}};
+  allScored.forEach(rs=>{
+    ['driving','irons','shortGame','putting'].forEach(cat=>{
+      if(rs[cat].score!==null){catTotals[cat].scores.push(rs[cat].score);catTotals[cat].count+=rs[cat].count}});
+  });
+  const catAvg={};
+  Object.entries(catTotals).forEach(([k,v])=>{catAvg[k]=v.scores.length?Math.round(v.scores.reduce((s,x)=>s+x,0)/v.scores.length):null});
+
+  // Club-level scores
+  const clubAgg={};
+  allScored.forEach(rs=>{rs.allScores.forEach(s=>{
+    const c=s.shot.club;if(!clubAgg[c])clubAgg[c]={scores:[],count:0};
+    clubAgg[c].scores.push(s.total);clubAgg[c].count++})});
+  const clubAvgs=Object.entries(clubAgg).map(([club,d])=>({
+    club,avg:Math.round(d.scores.reduce((s,v)=>s+v,0)/d.scores.length),count:d.count
+  })).filter(c=>c.count>=3).sort((a,b)=>a.avg-b.avg);
+
+  // Miss patterns
+  const missAgg={driveMiss:{},approachMiss:{},shapeIssues:{},puttIssues:{threePutts:0,totalRounds:S.rounds.length}};
+  allAnalyzed.forEach(st=>{
+    Object.entries(st.dm).forEach(([k,v])=>{missAgg.driveMiss[k]=(missAgg.driveMiss[k]||0)+v});
+    Object.entries(st.am).forEach(([k,v])=>{missAgg.approachMiss[k]=(missAgg.approachMiss[k]||0)+v});
+    Object.entries(st.sh).forEach(([k,v])=>{missAgg.shapeIssues[k]=(missAgg.shapeIssues[k]||0)+v});
+    missAgg.puttIssues.threePutts+=st.tp3;
+  });
+
+  // Build top 3 improvement areas with drills
+  const areas=[];
+
+  // Worst category
+  const sortedCats=Object.entries(catAvg).filter(([_,v])=>v!==null).sort((a,b)=>a[1]-b[1]);
+  sortedCats.forEach(([cat,score])=>{
+    if(areas.length>=3)return;
+    let drills=[];
+    if(cat==='driving'){
+      const topMiss=Object.entries(missAgg.driveMiss).sort((a,b)=>b[1]-a[1])[0];
+      const topShape=Object.entries(missAgg.shapeIssues).sort((a,b)=>b[1]-a[1])[0];
+      if(topShape&&['Slice','Push'].includes(topShape[0]))drills.push(DRILL_DB.driving_slice);
+      else if(topShape&&['Hook','Pull'].includes(topShape[0]))drills.push(DRILL_DB.driving_hook);
+      else drills.push(DRILL_DB.driving_accuracy);
+      if(score<50)drills.push(DRILL_DB.driving_distance);
+    }else if(cat==='irons'){
+      const topApproachMiss=Object.entries(missAgg.approachMiss).sort((a,b)=>b[1]-a[1])[0];
+      if(topApproachMiss&&topApproachMiss[0]==='Rough')drills.push(DRILL_DB.iron_accuracy);
+      else drills.push(DRILL_DB.iron_short_miss);
+      drills.push(DRILL_DB.iron_distance);
+    }else if(cat==='shortGame'){
+      const bunkerMisses=(missAgg.approachMiss['Bunker']||0);
+      if(bunkerMisses>=3)drills.push(DRILL_DB.shortgame_bunker);
+      else drills.push(DRILL_DB.shortgame_proximity);
+      drills.push(DRILL_DB.shortgame_distance_control);
+    }else if(cat==='putting'){
+      const avgTP=missAgg.puttIssues.threePutts/Math.max(missAgg.puttIssues.totalRounds,1);
+      if(avgTP>=2)drills.push(DRILL_DB.putting_lag);
+      else drills.push(DRILL_DB.putting_short);
+      drills.push(DRILL_DB.putting_read);
+    }
+    areas.push({cat,catLabel:{driving:'Driving',irons:'Irons',shortGame:'Short game',putting:'Putting'}[cat],score,drills});
+  });
+
+  // Add course management if penalties are high
+  const avgPen=allAnalyzed.reduce((s,a)=>s+a.pen,0)/allAnalyzed.length;
+  if(avgPen>=1.5&&areas.length<4){
+    areas.push({cat:'management',catLabel:'Course management',score:Math.round(Math.max(0,100-avgPen*25)),
+      drills:[DRILL_DB.course_mgmt_penalties,DRILL_DB.course_mgmt_scoring]});
+  }
+
+  // Add shape fix if dominant
+  const topShape=Object.entries(missAgg.shapeIssues).sort((a,b)=>b[1]-a[1])[0];
+  if(topShape&&topShape[1]>=5&&areas.length<4){
+    const drill=topShape[0]==='Slice'||topShape[0]==='Push'?DRILL_DB.shape_slice:DRILL_DB.shape_hook;
+    areas.push({cat:'shape',catLabel:'Shot shape ('+topShape[0]+')',score:Math.round(Math.max(0,100-topShape[1]*5)),drills:[drill]});
+  }
+
+  return{areas:areas.slice(0,3),clubWeaknesses:clubAvgs.slice(0,5),missPatterns:missAgg};
+}
+
+function rGoals(el){
+  if(!S.rounds.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},'Enter rounds to generate improvement goals.'));return}
+
+  const goals=analyzeGoals();
+
+  el.appendChild(h('div',{class:'st'},'Top 3 areas to improve'));
+  el.appendChild(h('div',{style:{fontSize:'0.74rem',color:'var(--fg2)',marginBottom:'1rem',lineHeight:1.5}},
+    `Based on ${S.rounds.length} round${S.rounds.length>1?'s':''}, here are your highest-impact improvement areas with targeted practice drills.`));
+
+  goals.areas.forEach((area,idx)=>{
+    const card=h('div',{class:'card',style:{marginBottom:'0.85rem',borderLeft:`3px solid ${area.score<40?'var(--danger)':area.score<60?'var(--warn)':'var(--info)'}`,borderRadius:'0 var(--radius-lg) var(--radius-lg) 0'}});
+
+    // Header
+    card.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.6rem'}},
+      h('div',{style:{display:'flex',alignItems:'center',gap:'0.5rem'}},
+        h('span',{style:{width:'26px',height:'26px',borderRadius:'50%',background:'var(--bg2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.72rem',fontWeight:600}},String(idx+1)),
+        h('span',{style:{fontSize:'0.95rem',fontWeight:500}},area.catLabel)),
+      h('div',{style:{display:'flex',alignItems:'center',gap:'0.5rem'}},
+        h('span',{style:{fontSize:'0.62rem',color:'var(--fg3)',textTransform:'uppercase'}},'Score'),
+        h('span',{style:{fontSize:'1.2rem',fontWeight:600,fontFamily:'var(--font-display)',color:scoreColor100(area.score)}},String(area.score)),
+        h('div',{style:{width:'50px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:area.score+'%',background:scoreBarColor(area.score)}})))
+      )
+    ));
+
+    // Drills
+    area.drills.forEach(drill=>{
+      if(!drill)return;
+      const drillEl=h('div',{style:{background:'var(--bg2)',borderRadius:'var(--radius)',padding:'0.75rem 0.9rem',marginBottom:'0.5rem'}});
+      drillEl.appendChild(h('div',{style:{fontWeight:500,fontSize:'0.84rem',marginBottom:'0.35rem',color:'var(--accent)'}},drill.title));
+      drillEl.appendChild(h('div',{style:{fontSize:'0.74rem',color:'var(--fg2)',lineHeight:1.55,marginBottom:'0.35rem'}},drill.drill));
+      drillEl.appendChild(h('div',{style:{fontSize:'0.72rem',color:'var(--fg2)',lineHeight:1.5,fontStyle:'italic',marginBottom:'0.25rem'}},drill.source));
+      drillEl.appendChild(h('div',{style:{fontSize:'0.62rem',color:'var(--fg3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.04em'}},'Frequency: '+drill.freq));
+      card.appendChild(drillEl);
+    });
+    el.appendChild(card);
+  });
+
+  // Weakest clubs
+  if(goals.clubWeaknesses.length>0){
+    el.appendChild(h('div',{class:'st',style:{marginTop:'0.75rem'}},'Weakest performing clubs'));
+    const tbl=h('div',{class:'card'});
+    goals.clubWeaknesses.forEach(cw=>{
+      tbl.appendChild(h('div',{class:'score-section'},
+        h('div',{class:'score-info'},
+          h('div',{class:'score-club-name'},cw.club),
+          h('div',{class:'score-club-detail'},cw.count+' total shots'+(PGA_CARRY[cw.club]?' · PGA benchmark: '+PGA_CARRY[cw.club]+'y':''))),
+        h('div',{class:'score-value',style:{color:scoreColor100(cw.avg)}},String(cw.avg)),
+        h('div',{style:{width:'70px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:cw.avg+'%',background:scoreBarColor(cw.avg)}})))
+      ));
+    });
+    el.appendChild(tbl);
+  }
+
+  // Miss patterns summary
+  const mp=goals.missPatterns;
+  const topDM=Object.entries(mp.driveMiss).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const topAM=Object.entries(mp.approachMiss).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const topSH=Object.entries(mp.shapeIssues).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  if(topDM.length||topAM.length||topSH.length){
+    el.appendChild(h('div',{class:'st',style:{marginTop:'0.75rem'}},'Miss patterns'));
+    const patCard=h('div',{class:'card'});
+
+    if(topDM.length){
+      patCard.appendChild(h('div',{style:{fontSize:'0.68rem',fontWeight:500,color:'var(--fg3)',textTransform:'uppercase',marginBottom:'0.3rem'}},'Drives missing to'));
+      patCard.appendChild(h('div',{style:{display:'flex',gap:'0.3rem',flexWrap:'wrap',marginBottom:'0.6rem'}},
+        ...topDM.map(([k,v])=>h('span',{class:'ct',style:{fontSize:'0.7rem'}},k+': '+v+'x'))));
+    }
+    if(topAM.length){
+      patCard.appendChild(h('div',{style:{fontSize:'0.68rem',fontWeight:500,color:'var(--fg3)',textTransform:'uppercase',marginBottom:'0.3rem'}},'Approaches ending in'));
+      patCard.appendChild(h('div',{style:{display:'flex',gap:'0.3rem',flexWrap:'wrap',marginBottom:'0.6rem'}},
+        ...topAM.map(([k,v])=>h('span',{class:'ct',style:{fontSize:'0.7rem'}},k+': '+v+'x'))));
+    }
+    if(topSH.length){
+      patCard.appendChild(h('div',{style:{fontSize:'0.68rem',fontWeight:500,color:'var(--fg3)',textTransform:'uppercase',marginBottom:'0.3rem'}},'Dominant miss shapes'));
+      patCard.appendChild(h('div',{style:{display:'flex',gap:'0.3rem',flexWrap:'wrap'}},
+        ...topSH.map(([k,v])=>h('span',{class:'ct',style:{fontSize:'0.7rem'}},k+': '+v+'x'))));
+    }
+    el.appendChild(patCard);
+  }
+
+  // Practice schedule suggestion
+  el.appendChild(h('div',{class:'st',style:{marginTop:'0.75rem'}},'Suggested weekly practice'));
+  const schedCard=h('div',{class:'card'});
+  const schedule=[];
+  if(goals.areas[0])schedule.push({day:'Session 1',focus:goals.areas[0].catLabel,time:'20 min',detail:goals.areas[0].drills[0]?.title||'Work on weakest area'});
+  if(goals.areas[1])schedule.push({day:'Session 2',focus:goals.areas[1].catLabel,time:'20 min',detail:goals.areas[1].drills[0]?.title||'Work on second area'});
+  if(goals.areas[2])schedule.push({day:'Session 3',focus:goals.areas[2].catLabel,time:'15 min',detail:goals.areas[2].drills[0]?.title||'Work on third area'});
+  schedule.push({day:'Pre-round',focus:'Putting + tempo',time:'15 min',detail:'Ladder drill for lag, then 10 putts from 4 feet for confidence'});
+
+  schedule.forEach(s=>{
+    schedCard.appendChild(h('div',{style:{display:'flex',alignItems:'center',gap:'0.7rem',padding:'0.45rem 0',borderBottom:'0.5px solid var(--border)'}},
+      h('div',{style:{minWidth:'70px',fontSize:'0.68rem',fontWeight:500,color:'var(--accent)'}},s.day),
+      h('div',{style:{flex:1}},
+        h('div',{style:{fontSize:'0.78rem',fontWeight:500}},s.focus),
+        h('div',{style:{fontSize:'0.66rem',color:'var(--fg3)'}},s.detail)),
+      h('div',{style:{fontSize:'0.66rem',color:'var(--fg3)',minWidth:'40px',textAlign:'right'}},s.time)
+    ));
+  });
+  el.appendChild(schedCard);
+}
 
 // ─── ROUNDS ────────────────────────────
 function rR(el){if(!S.rounds.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},'No rounds yet.'));return}
