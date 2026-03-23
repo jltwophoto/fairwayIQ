@@ -333,7 +333,7 @@ function mkS(tee){return{shotNumber:1,lie:tee?'Tee':'Fairway',distToHole:'',club
 function sv(){DB.s('courses',S.courses);DB.s('rounds',S.rounds)}
 
 // ─── DOM ───────────────────────────────
-function h(t,a,...c){const e=document.createElement(t);if(a)Object.entries(a).forEach(([k,v])=>{if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==='style'&&typeof v==='object')Object.assign(e.style,v);else if(k==='disabled'){if(v)e.setAttribute('disabled','');else e.removeAttribute('disabled')}else if(k==='selected'&&v)e.selected=true;else if(k==='value')e.value=v;else e.setAttribute(k,v)});c.flat(Infinity).forEach(x=>{if(x!=null&&x!==false)e.appendChild(typeof x==='string'||typeof x==='number'?document.createTextNode(String(x)):x)});return e}
+function h(t,a,...c){const e=document.createElement(t);if(a)Object.entries(a).forEach(([k,v])=>{if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==='style'&&typeof v==='object')Object.assign(e.style,v);else if(k==='disabled'){if(v)e.setAttribute('disabled','');else e.removeAttribute('disabled')}else if(k==='selected'&&v)e.selected=true;else if(k==='value'){e._deferValue=v}else e.setAttribute(k,v)});c.flat(Infinity).forEach(x=>{if(x!=null&&x!==false)e.appendChild(typeof x==='string'||typeof x==='number'?document.createTextNode(String(x)):x)});if(e._deferValue!==undefined){e.value=e._deferValue;delete e._deferValue}return e}
 function $(s){return document.querySelector(s)}
 function toast(m){const t=h('div',{class:'toast'},m);document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
 function ccd(s){const a=parseFloat(s.distToHole),b=parseFloat(s.endDistToHole);return(!isNaN(a)&&!isNaN(b)&&a>0)?Math.abs(a-b):0}
@@ -341,8 +341,10 @@ function sc(d){return d<=-2?'var(--eagle)':d===-1?'var(--birdie)':d===0?'var(--p
 function scb(d){return d<=-2?'#d4a01720':d===-1?'#c1121f20':d===0?'#2d6a4f20':d===1?'#1d4e8920':'#6c4ab620'}
 function elbg(e){return e==='Green'?'var(--positive-light)':e==='Fairway'?'var(--info-light)':e==='Penalty'?'var(--danger-light)':'var(--warn-light)'}
 function elfg(e){return e==='Green'?'var(--positive)':e==='Fairway'?'var(--info)':e==='Penalty'?'var(--danger)':'var(--warn)'}
-function mSel(l,v,o,fn){return h('div',null,h('label',null,l),h('select',{class:'sel',value:v,onChange:function(){fn(this.value)}},
-  ...o.map(x=>typeof x==='string'?h('option',{value:x,selected:v===x},x):h('option',{value:x.v,selected:v===x.v},x.l))))}
+function mSel(l,v,o,fn){
+  return h('div',null,h('label',null,l),h('select',{class:'sel',value:v,onChange:function(){fn(this.value)}},
+    ...o.map(x=>typeof x==='string'?h('option',{value:x},x):h('option',{value:x.v},x.l))));
+}
 function mInp(l,v,fn,p){return h('div',null,h('label',null,l),h('input',{class:'inp',value:v!=null?String(v):'',onInput:function(){fn(this.value)},...(p||{})}))}
 function mM(l,v,s,c){return h('div',{class:'metric'},h('div',{class:'metric-label'},l),h('div',{class:'metric-val',style:c?{color:c}:{}},v),s?h('div',{class:'metric-sub'},s):null)}
 
@@ -418,7 +420,7 @@ function rC(el){
   const g=h('div',{class:'hg'});g.append(h('div',{class:'hdr'},'Hole'),h('div',{class:'hdr'},'Par'),h('div',{class:'hdr'},'Yards'),h('div',{class:'hdr'},'Hdcp'));
   f.holes.forEach((x,i)=>{if(i===9){g.appendChild(h('div',{class:'td'}));g.appendChild(h('div',{style:{gridColumn:'1/-1',fontSize:'0.55rem',color:'var(--accent)',fontWeight:600,textTransform:'uppercase'}},'Back nine'))}
     g.appendChild(h('div',{style:{fontWeight:500}},String(x.number)));
-    g.appendChild(h('select',{class:'sel',value:String(x.par),style:{padding:'0.2rem'},onChange:function(){x.par=+this.value}},...[3,4,5].map(p=>h('option',{value:String(p),selected:x.par===p},String(p)))));
+    g.appendChild(h('select',{class:'sel',value:String(x.par),style:{padding:'0.2rem'},onChange:function(){x.par=+this.value}},...[3,4,5].map(p=>h('option',{value:String(p)},String(p)))));
     g.appendChild(h('input',{class:'inp',type:'number',value:String(x.yards),style:{padding:'0.2rem'},onInput:function(){x.yards=+this.value}}));
     g.appendChild(h('input',{class:'inp',type:'number',value:String(x.handicap),style:{padding:'0.2rem'},onInput:function(){x.handicap=+this.value}}))});
   cd.appendChild(g);
