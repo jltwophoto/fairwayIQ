@@ -919,10 +919,133 @@ function rA(el){
   // Scorecard
   rSC(el,rd,st);
 
+  // ─── Projected Score Analysis ─────────
+  rProjectedScore(el,rd,st);
+
   el.appendChild(h('div',{class:'st',style:{marginTop:'0.8rem'}},'Improvement focus'));
   if(!ins.length)el.appendChild(h('div',{class:'card'},h('div',{style:{textAlign:'center',padding:'0.6rem',color:'var(--fg3)'}},'Nothing flagged.')));
   else ins.forEach(i=>el.appendChild(rI(i)));
   if(S.rounds.length>=2)rH(el);
+}
+
+function rProjectedScore(el,round,st){
+  const holes=round.holes||[];
+  if(!holes.length||!holes.some(h=>h.shots&&h.shots.length))return;
+
+  const cats={
+    driving:{label:'Driving',saved:0,details:[]},
+    irons:{label:'Irons',saved:0,details:[]},
+    shortGame:{label:'Short game',saved:0,details:[]},
+    putting:{label:'Putting',saved:0,details:[]}
+  };
+
+  holes.forEach(hole=>{
+    const shots=hole.shots||[];
+    const par=hole.par;const score=shots.length;
+    if(score<=par)return;
+    const overPar=score-par;
+    const puttCount=shots.filter(s=>s.club==='Putter').length;
+
+    // Driving: penalty off tee or missed fairway
+    if(par>=4&&shots.length>0){
+      const ts=shots[0];
+      if(ts.endLie==='Penalty'){
+        cats.driving.saved+=2;
+        cats.driving.details.push({hole:hole.number,issue:'Penalty off tee',cost:2});
+      }else if(['Rough','Bunker','Waste Area','Hazard'].includes(ts.endLie)&&overPar>=1){
+        cats.driving.saved+=0.5;
+        cats.driving.details.push({hole:hole.number,issue:'Missed FW → '+ts.endLie,cost:0.5});
+      }
+    }
+
+    // Putting: three-putts
+    if(puttCount>=3){
+      const extra=puttCount-2;
+      cats.putting.saved+=extra;
+      cats.putting.details.push({hole:hole.number,issue:puttCount+'-putt',cost:extra});
+    }
+
+    // GIR check
+    const greenIdx=shots.findIndex(s=>s.endLie==='Green');
+    const girMade=greenIdx>=0&&greenIdx<=par-2;
+
+    // Iron miss: approach shots that didn't reach green in regulation
+    if(!girMade&&overPar>=1){
+      const approaches=shots.filter((s,i)=>i>0&&s.club!=='Putter'&&!['PW','W50','W56','W60'].includes(s.club)&&s.lie!=='Green'&&s.lie!=='Fringe');
+      if(approaches.some(s=>s.endLie==='Penalty')){
+        cats.irons.saved+=1.5;
+        cats.irons.details.push({hole:hole.number,issue:'Approach → penalty',cost:1.5});
+      }else if(approaches.length>0&&puttCount<=2){
+        cats.irons.saved+=0.5;
+        cats.irons.details.push({hole:hole.number,issue:'Missed GIR (iron)',cost:0.5});
+      }
+    }
+
+    // Short game: failed up-and-down
+    if(!girMade&&puttCount<=2&&overPar>=1){
+      const wedges=shots.filter(s=>['PW','W50','W56','W60'].includes(s.club)||(s.lie==='Bunker'&&s.club!=='Putter'));
+      if(wedges.length>0){
+        const last=wedges[wedges.length-1];
+        const ed=parseFloat(last.endDistToHole);
+        if(ed>5||last.endLie!=='Green'){
+          cats.shortGame.saved+=0.5;
+          cats.shortGame.details.push({hole:hole.number,issue:'Poor chip/pitch'+(ed?' ('+Math.round(ed)+'y left)':''),cost:0.5});
+        }
+      }
+    }
+  });
+
+  const projections=Object.entries(cats).filter(([_,c])=>c.saved>0)
+    .map(([key,c])=>({...c,key,projected:Math.round((st.ts-c.saved)*10)/10}))
+    .sort((a,b)=>b.saved-a.saved);
+
+  if(!projections.length)return;
+
+  el.appendChild(h('div',{class:'st',style:{marginTop:'1rem'}},'"What if" projected scores'));
+  el.appendChild(h('div',{style:{fontSize:'0.74rem',color:'var(--fg2)',marginBottom:'0.6rem',lineHeight:1.5}},
+    'Improving your weakest area to a reasonable level — here\'s the stroke impact:'));
+
+  const card=h('div',{class:'card'});
+  card.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',paddingBottom:'0.5rem',borderBottom:'1px solid var(--border)',marginBottom:'0.4rem'}},
+    h('div',{style:{fontSize:'0.7rem',color:'var(--fg3)'}},'Actual score'),
+    h('div',{style:{fontSize:'1.2rem',fontWeight:600,fontFamily:'var(--font-display)'}},st.ts+' ('+(st.diff>=0?'+':'')+st.diff+')')
+  ));
+
+  projections.forEach(proj=>{
+    const sv=Math.round(proj.saved*10)/10;
+    const ps=Math.round((st.ts-sv)*10)/10;
+    const pd=Math.round((ps-st.tp)*10)/10;
+    const row=h('div',{style:{padding:'0.45rem 0',borderBottom:'0.5px solid var(--border)'}});
+    row.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.2rem'}},
+      h('div',null,
+        h('span',{style:{fontSize:'0.82rem',fontWeight:500}},proj.label),
+        h('span',{style:{fontSize:'0.66rem',color:'var(--positive)',fontWeight:500,marginLeft:'0.4rem'}},'−'+sv+' stroke'+(sv!==1?'s':''))),
+      h('div',{style:{textAlign:'right'}},
+        h('div',{style:{fontSize:'1.05rem',fontWeight:600,fontFamily:'var(--font-display)',color:'var(--positive)'}},ps+' ('+(pd>=0?'+':'')+pd+')'),
+        h('div',{style:{fontSize:'0.55rem',color:'var(--fg3)'}},'projected'))
+    ));
+    if(proj.details.length){
+      row.appendChild(h('div',{style:{display:'flex',flexWrap:'wrap',gap:'0.2rem',marginTop:'0.15rem'}},
+        ...proj.details.map(d=>h('span',{style:{fontSize:'0.6rem',padding:'0.08rem 0.35rem',borderRadius:'3px',background:'var(--bg2)',color:'var(--fg2)'}},
+          '#'+d.hole+': '+d.issue+' (−'+d.cost+')'))));
+    }
+    card.appendChild(row);
+  });
+
+  const totalSv=projections.reduce((s,p)=>s+p.saved,0);
+  if(projections.length>1&&totalSv>1){
+    const bs=Math.round((st.ts-totalSv)*10)/10;
+    const bd=Math.round((bs-st.tp)*10)/10;
+    card.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0.5rem 0',borderTop:'1.5px solid var(--border)',marginTop:'0.2rem'}},
+      h('div',null,
+        h('span',{style:{fontSize:'0.82rem',fontWeight:500}},'All areas combined'),
+        h('span',{style:{fontSize:'0.66rem',color:'var(--positive)',fontWeight:500,marginLeft:'0.4rem'}},'−'+Math.round(totalSv*10)/10+' strokes')),
+      h('div',{style:{textAlign:'right'}},
+        h('div',{style:{fontSize:'1.15rem',fontWeight:600,fontFamily:'var(--font-display)',color:'var(--positive)'}},bs+' ('+(bd>=0?'+':'')+bd+')'),
+        h('div',{style:{fontSize:'0.55rem',color:'var(--fg3)'}},'best case'))
+    ));
+  }
+  el.appendChild(card);
 }
 
 function rI(i){return h('div',{class:`card ic ${i.p}`},
