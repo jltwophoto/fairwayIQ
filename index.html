@@ -326,11 +326,15 @@ let S={
   aci:'c_micke_grove',rd:new Date().toISOString().split('T')[0],ch:1,hs:{},
   cs:mkS(true),rc:{greens:'Medium',weather:[],notes:''},
   sri:null,av:'single',showCond:false,
+  playerName:DB.g('lastPlayer')||'',playerHandicap:DB.g('lastHandicap')||'',
+  filterPlayer:'',
 };
 
 function mkC(){return{name:'',tees:'White',holes:Array.from({length:18},(_,i)=>({number:i+1,par:4,yards:350,handicap:i+1}))}}
 function mkS(tee){return{shotNumber:1,lie:tee?'Tee':'Fairway',distToHole:'',club:tee?'Dr':'7i',endLie:'Fairway',shape:'Neutral',endDistToHole:'',clubDist:null}}
 function sv(){DB.s('courses',S.courses);DB.s('rounds',S.rounds)}
+function getPlayers(){const names=new Set();S.rounds.forEach(r=>{if(r.player)names.add(r.player)});return[...names].sort()}
+function getFilteredRounds(){if(!S.filterPlayer)return S.rounds;return S.rounds.filter(r=>r.player===S.filterPlayer)}
 
 // ─── DOM ───────────────────────────────
 function h(t,a,...c){const e=document.createElement(t);if(a)Object.entries(a).forEach(([k,v])=>{if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==='style'&&typeof v==='object')Object.assign(e.style,v);else if(k==='disabled'){if(v)e.setAttribute('disabled','');else e.removeAttribute('disabled')}else if(k==='selected'&&v)e.selected=true;else if(k==='value'){e._deferValue=v}else e.setAttribute(k,v)});c.flat(Infinity).forEach(x=>{if(x!=null&&x!==false)e.appendChild(typeof x==='string'||typeof x==='number'?document.createTextNode(String(x)):x)});if(e._deferValue!==undefined){e.value=e._deferValue;delete e._deferValue}return e}
@@ -387,6 +391,25 @@ function genInsights(st){
   ins.sort((a,b)=>{const o={high:0,medium:1,positive:2};return(o[a.p]??3)-(o[b.p]??3)||(b.im||0)-(a.im||0)});return ins;
 }
 
+// ─── Player Filter Component ──────────
+function renderPlayerFilter(el){
+  const players=getPlayers();
+  if(players.length<=1)return; // no filter needed for single player
+  const row=h('div',{style:{display:'flex',gap:'0.25rem',flexWrap:'wrap',marginBottom:'0.75rem',alignItems:'center'}});
+  row.appendChild(h('span',{style:{fontSize:'0.62rem',color:'var(--fg3)',fontWeight:500,textTransform:'uppercase',marginRight:'0.2rem'}},'Player:'));
+  row.appendChild(h('button',{class:'btn s',style:{
+    background:!S.filterPlayer?'var(--accent-light)':'var(--bg2)',color:!S.filterPlayer?'var(--accent)':'var(--fg2)',
+    border:!S.filterPlayer?'1px solid var(--accent)':'1px solid var(--border)',fontSize:'0.65rem',padding:'0.15rem 0.5rem'},
+    onClick:()=>{S.filterPlayer='';render()}},'All'));
+  players.forEach(p=>{
+    row.appendChild(h('button',{class:'btn s',style:{
+      background:S.filterPlayer===p?'var(--accent-light)':'var(--bg2)',color:S.filterPlayer===p?'var(--accent)':'var(--fg2)',
+      border:S.filterPlayer===p?'1px solid var(--accent)':'1px solid var(--border)',fontSize:'0.65rem',padding:'0.15rem 0.5rem'},
+      onClick:()=>{S.filterPlayer=p;render()}},p));
+  });
+  el.appendChild(row);
+}
+
 // ─── Render ────────────────────────────
 let ch_arr=[];function dc(){ch_arr.forEach(c=>c.destroy());ch_arr=[]}
 
@@ -441,10 +464,35 @@ function rP(el){
   const co=S.courses.find(c=>c.id===S.aci),ho=co.holes[S.ch-1],shots=S.hs[S.ch]||[];
   const tpar=co.holes.reduce((s,x)=>s+x.par,0),tsh=Object.values(S.hs).reduce((s,a)=>s+a.length,0);
   const hp=Object.keys(S.hs).filter(k=>S.hs[k]?.length>0).length,dif=tsh-tpar;
-  el.appendChild(h('div',{class:'g3',style:{marginBottom:'0.7rem'}},
+  el.appendChild(h('div',{class:'g3',style:{marginBottom:'0.5rem'}},
     mSel('Course',S.aci,S.courses.map(c=>({v:c.id,l:c.name})),v=>{S.aci=v;S.hs={};S.ch=1;render()}),
     mInp('Date',S.rd,v=>{S.rd=v},{type:'date'}),
     h('div',{style:{display:'flex',alignItems:'end',paddingBottom:'0.2rem'}},h('div',{style:{fontSize:'0.72rem',color:'var(--fg3)'}},`${hp}/18 · ${tsh} shots (${dif>=0?'+':''}${tsh===0?'E':dif===0?'E':dif})`))));
+
+  // Player info
+  const players=getPlayers();
+  const playerRow=h('div',{style:{display:'flex',gap:'0.5rem',alignItems:'end',marginBottom:'0.7rem',flexWrap:'wrap'}});
+  const nameWrap=h('div',{style:{flex:'1',minWidth:'140px'}});
+  nameWrap.appendChild(h('label',null,'Player'));
+  if(players.length>0){
+    const btnRow=h('div',{style:{display:'flex',gap:'0.2rem',flexWrap:'wrap',marginBottom:'0.2rem'}});
+    players.forEach(p=>{btnRow.appendChild(h('button',{class:'btn s',style:{
+      background:S.playerName===p?'var(--accent-light)':'var(--bg2)',color:S.playerName===p?'var(--accent)':'var(--fg2)',
+      border:S.playerName===p?'1px solid var(--accent)':'1px solid var(--border)',fontSize:'0.65rem',padding:'0.15rem 0.45rem'},
+      onClick:()=>{S.playerName=p;const pr=S.rounds.filter(r=>r.player===p);
+        if(pr.length&&pr[pr.length-1].handicap!=null)S.playerHandicap=String(pr[pr.length-1].handicap);
+        DB.s('lastPlayer',p);render()}},p))});
+    nameWrap.appendChild(btnRow);
+  }
+  nameWrap.appendChild(h('input',{class:'inp',value:S.playerName,placeholder:'First name',
+    onInput:function(){S.playerName=this.value;DB.s('lastPlayer',this.value)}}));
+  playerRow.appendChild(nameWrap);
+  const hcWrap=h('div',{style:{width:'80px'}});
+  hcWrap.appendChild(h('label',null,'Handicap'));
+  hcWrap.appendChild(h('input',{class:'inp',type:'number',value:S.playerHandicap,placeholder:'e.g. 15',
+    onInput:function(){S.playerHandicap=this.value;DB.s('lastHandicap',this.value)}}));
+  playerRow.appendChild(hcWrap);
+  el.appendChild(playerRow);
 
   el.appendChild(h('button',{class:'btn s',style:{marginBottom:'0.5rem'},onClick:()=>{S.showCond=!S.showCond;render()}},S.showCond?'Hide conditions':'Conditions'));
   if(S.showCond){const cc=h('div',{class:'card',style:{marginBottom:'0.6rem'}});cc.appendChild(h('div',{class:'st'},'Round conditions'));
@@ -501,30 +549,35 @@ function rP(el){
     S.cs={shotNumber:nw.length+1,lie:og?'Green':(LIES.includes(nl)?nl:'Fairway'),distToHole:ns.endDistToHole||'',club:og?'Putter':'7i',endLie:og?'Green':'Green',shape:'Neutral',endDistToHole:'',clubDist:null};render()}},'Log shot'));
   el.appendChild(cd);
   el.appendChild(h('div',{style:{display:'flex',justifyContent:'center',marginTop:'1rem'}},
-    h('button',{class:'btn p',disabled:hp===0,style:{fontSize:'0.9rem',padding:'0.65rem 2rem'},onClick:()=>{
-      const rd={id:'r_'+Date.now(),courseId:co.id,courseName:co.name,date:S.rd,conditions:{...S.rc},
+    h('button',{class:'btn p',disabled:hp===0||!S.playerName.trim(),style:{fontSize:'0.9rem',padding:'0.65rem 2rem'},onClick:()=>{
+      if(!S.playerName.trim()){toast('Enter player name');return}
+      const hc=parseFloat(S.playerHandicap);
+      const rd={id:'r_'+Date.now(),courseId:co.id,courseName:co.name,date:S.rd,
+        player:S.playerName.trim(),handicap:!isNaN(hc)?hc:null,
+        conditions:{...S.rc},
         holes:co.holes.map((x,i)=>{const sh=S.hs[i+1]||[];return{...x,shots:sh,score:sh.length}})};
       S.rounds.push(rd);S.hs={};S.ch=1;S.cs=mkS(true);S.rc={greens:'Medium',weather:[],notes:''};
-      S.sri=rd.id;S.tab='scores';sv();toast(`Saved: ${rd.holes.reduce((s,x)=>s+x.score,0)}`);render()
-    }},`Finish round (${hp} holes)`)));
+      S.sri=rd.id;S.tab='scores';S.filterPlayer=rd.player;sv();toast(`Saved: ${rd.player} — ${rd.holes.reduce((s,x)=>s+x.score,0)}`);render()
+    }},`Finish round (${hp} holes)${S.playerName.trim()?` — ${S.playerName.trim()}`:''}`)));
 }
 
 // ─── SCORES TAB (NEW) ─────────────────
 function rScores(el){
-  if(!S.rounds.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},'No rounds yet.'));return}
-  if(!S.sri)S.sri=S.rounds[S.rounds.length-1].id;
-  const rd=S.rounds.find(r=>r.id===S.sri);if(!rd){S.sri=S.rounds[S.rounds.length-1].id;render();return}
+  const fr=getFilteredRounds();
+  if(!fr.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},S.rounds.length?'No rounds for this player.':'No rounds yet.'));renderPlayerFilter(el);return}
+  renderPlayerFilter(el);
+  if(!S.sri||!fr.find(r=>r.id===S.sri))S.sri=fr[fr.length-1].id;
+  const rd=fr.find(r=>r.id===S.sri);if(!rd){S.sri=fr[fr.length-1].id;render();return}
 
   el.appendChild(h('div',{style:{display:'flex',gap:'0.5rem',alignItems:'center',marginBottom:'0.7rem'}},
     h('label',{style:{marginBottom:0}},'Round:'),
     h('select',{class:'sel',style:{flex:1},value:S.sri,onChange:function(){S.sri=this.value;render()}},
-      ...S.rounds.slice().reverse().map(r=>h('option',{value:r.id,selected:S.sri===r.id},`${r.date} — ${r.courseName}`)))));
+      ...fr.slice().reverse().map(r=>h('option',{value:r.id},`${r.date} — ${r.courseName}${r.player?' ('+r.player+')':''}`)))));
 
-  // Toggle single vs cumulative
-  if(S.rounds.length>=2){
+  if(fr.length>=2){
     el.appendChild(h('div',{style:{display:'flex',gap:'0.4rem',marginBottom:'0.7rem'}},
       h('button',{class:'btn s'+(S.av!=='cum'?' p':''),onClick:()=>{S.av='single';render()}},'This round'),
-      h('button',{class:'btn s'+(S.av==='cum'?' p':''),onClick:()=>{S.av='cum';render()}},'All rounds ('+S.rounds.length+')')));
+      h('button',{class:'btn s'+(S.av==='cum'?' p':''),onClick:()=>{S.av='cum';render()}},'All rounds ('+fr.length+')')));
   }
 
   if(S.av==='cum'&&S.rounds.length>=2){
@@ -621,7 +674,8 @@ function rScores(el){
 }
 
 function rCumScores(el){
-  const allScored=S.rounds.map(r=>scoreRound(r));
+  const fr=getFilteredRounds();
+  const allScored=fr.map(r=>scoreRound(r));
   const avg=arr=>{const v=arr.filter(x=>x!==null);return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length):null};
 
   const cumOverall=avg(allScored.map(s=>s.overall));
@@ -677,12 +731,14 @@ function rCumScores(el){
 
 // ─── ANALYSIS TAB ──────────────────────
 function rA(el){
-  if(!S.rounds.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},'No rounds yet.'));return}
-  if(!S.sri)S.sri=S.rounds[S.rounds.length-1].id;
-  const rd=S.rounds.find(r=>r.id===S.sri);if(!rd){S.sri=S.rounds[S.rounds.length-1].id;render();return}
+  const fr=getFilteredRounds();
+  if(!fr.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},S.rounds.length?'No rounds for this player.':'No rounds yet.'));renderPlayerFilter(el);return}
+  renderPlayerFilter(el);
+  if(!S.sri||!fr.find(r=>r.id===S.sri))S.sri=fr[fr.length-1].id;
+  const rd=fr.find(r=>r.id===S.sri);if(!rd){S.sri=fr[fr.length-1].id;render();return}
   el.appendChild(h('div',{style:{display:'flex',gap:'0.5rem',alignItems:'center',marginBottom:'0.7rem'}},h('label',{style:{marginBottom:0}},'Round:'),
     h('select',{class:'sel',style:{flex:1},value:S.sri,onChange:function(){S.sri=this.value;render()}},
-      ...S.rounds.slice().reverse().map(r=>h('option',{value:r.id,selected:S.sri===r.id},`${r.date} — ${r.courseName}`)))));
+      ...fr.slice().reverse().map(r=>h('option',{value:r.id},`${r.date} — ${r.courseName}${r.player?' ('+r.player+')':''}`)))));
   const st=analyze(rd),ins=genInsights(st);
   // Conditions
   if(rd.conditions){const c=rd.conditions,tags=[];if(c.greens)tags.push('Greens: '+c.greens);if(c.weather)c.weather.forEach(w=>tags.push(w));
@@ -771,9 +827,10 @@ const DRILL_DB={
 };
 
 function analyzeGoals(){
-  if(!S.rounds.length)return{areas:[],clubWeaknesses:[],missPatterns:[]};
-  const allScored=S.rounds.map(r=>scoreRound(r));
-  const allAnalyzed=S.rounds.map(r=>analyze(r));
+  const fr=getFilteredRounds();
+  if(!fr.length)return{areas:[],clubWeaknesses:[],missPatterns:[]};
+  const allScored=fr.map(r=>scoreRound(r));
+  const allAnalyzed=fr.map(r=>analyze(r));
 
   // Aggregate category scores
   const catTotals={driving:{scores:[],count:0},irons:{scores:[],count:0},shortGame:{scores:[],count:0},putting:{scores:[],count:0}};
@@ -854,7 +911,9 @@ function analyzeGoals(){
 }
 
 function rGoals(el){
-  if(!S.rounds.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},'Enter rounds to generate improvement goals.'));return}
+  const fr=getFilteredRounds();
+  if(!fr.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},S.rounds.length?'No rounds for this player.':'Enter rounds to generate improvement goals.'));renderPlayerFilter(el);return}
+  renderPlayerFilter(el);
 
   const goals=analyzeGoals();
 
@@ -957,12 +1016,16 @@ function rGoals(el){
 
 // ─── ROUNDS ────────────────────────────
 function rR(el){if(!S.rounds.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},'No rounds yet.'));return}
-  el.appendChild(h('div',{class:'st'},'All rounds'));
-  S.rounds.slice().reverse().forEach(r=>{const s=analyze(r),sc2=scoreRound(r),c=r.conditions,tags=[];
+  renderPlayerFilter(el);
+  const fr=getFilteredRounds();
+  el.appendChild(h('div',{class:'st'},`${fr.length} round${fr.length!==1?'s':''}`));
+  fr.slice().reverse().forEach(r=>{const s=analyze(r),sc2=scoreRound(r),c=r.conditions,tags=[];
     if(c){if(c.greens)tags.push(c.greens);if(c.weather)c.weather.forEach(w=>tags.push(w))}
     el.appendChild(h('div',{class:'card',style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0.55rem 0.85rem'}},
       h('div',null,h('div',{style:{fontWeight:500,fontSize:'0.86rem'}},r.courseName),
-        h('div',{style:{fontSize:'0.68rem',color:'var(--fg3)'}},`${r.date} · ${s.ts} (${s.diff>=0?'+':''}${s.diff}) · IQ: `,h('span',{style:{fontWeight:600,color:scoreColor100(sc2.overall)}},sc2.overall!==null?String(sc2.overall):'—')),
+        h('div',{style:{fontSize:'0.68rem',color:'var(--fg3)'}},
+          `${r.date}${r.player?' · '+r.player:''}${r.handicap!=null?' ('+r.handicap+' hdcp)':''} · ${s.ts} (${s.diff>=0?'+':''}${s.diff}) · IQ: `,
+          h('span',{style:{fontWeight:600,color:scoreColor100(sc2.overall)}},sc2.overall!==null?String(sc2.overall):'—')),
         tags.length?h('div',{style:{display:'flex',gap:'0.2rem',flexWrap:'wrap',marginTop:'0.15rem'}},...tags.map(t=>h('span',{class:'ct'},t))):null),
       h('div',{style:{display:'flex',gap:'0.3rem'}},
         h('button',{class:'btn s',onClick:()=>{S.sri=r.id;S.tab='scores';S.av='single';render()}},'Scores'),
