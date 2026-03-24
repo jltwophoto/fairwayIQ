@@ -622,7 +622,7 @@ function rP(el){
   const tpar=co.holes.reduce((s,x)=>s+x.par,0),tsh=Object.values(S.hs).reduce((s,a)=>s+a.length,0);
   const hp=Object.keys(S.hs).filter(k=>S.hs[k]?.length>0).length,dif=tsh-tpar;
   el.appendChild(h('div',{class:'g3',style:{marginBottom:'0.5rem'}},
-    mSel('Course',S.aci,S.courses.map(c=>({v:c.id,l:c.name})),v=>{S.aci=v;S.hs={};S.ch=1;render()}),
+    mSel('Course',S.aci,S.courses.map(c=>{const ty=c.holes.reduce((s,x)=>s+x.yards,0);return{v:c.id,l:c.name+' ('+(c.tees||'')+(ty?' - '+ty+' yds':'')+')'}}),v=>{S.aci=v;S.hs={};S.ch=1;render()}),
     mInp('Date',S.rd,v=>{S.rd=v},{type:'date'}),
     h('div',{style:{display:'flex',alignItems:'end',paddingBottom:'0.2rem'}},h('div',{style:{fontSize:'0.72rem',color:'var(--fg3)'}},`${hp}/18 · ${tsh} shots (${dif>=0?'+':''}${tsh===0?'E':dif===0?'E':dif})`))));
 
@@ -709,7 +709,7 @@ function rP(el){
     h('button',{class:'btn p',disabled:hp===0||!S.playerName.trim(),style:{fontSize:'0.9rem',padding:'0.65rem 2rem'},onClick:()=>{
       if(!S.playerName.trim()){toast('Enter player name');return}
       const hc=parseFloat(S.playerHandicap);
-      const rd={id:'r_'+Date.now(),courseId:co.id,courseName:co.name,date:S.rd,
+      const rd={id:'r_'+Date.now(),courseId:co.id,courseName:co.name,courseTees:co.tees||'',date:S.rd,
         player:S.playerName.trim(),handicap:!isNaN(hc)?hc:null,
         conditions:{...S.rc},
         holes:co.holes.map((x,i)=>{const sh=S.hs[i+1]||[];return{...x,shots:sh,score:sh.length}})};
@@ -729,7 +729,7 @@ function rScores(el){
   el.appendChild(h('div',{style:{display:'flex',gap:'0.5rem',alignItems:'center',marginBottom:'0.7rem'}},
     h('label',{style:{marginBottom:0}},'Round:'),
     h('select',{class:'sel',style:{flex:1},value:S.sri,onChange:function(){S.sri=this.value;render()}},
-      ...fr.slice().reverse().map(r=>h('option',{value:r.id},`${r.date} — ${r.courseName}${r.player?' ('+r.player+')':''}`)))));
+      ...fr.slice().reverse().map(r=>h('option',{value:r.id},`${r.date} — ${r.courseName}${r.courseTees?" ("+r.courseTees+")":""}${r.player?' ('+r.player+')':''}`)))));
 
   if(fr.length>=2){
     el.appendChild(h('div',{style:{display:'flex',gap:'0.4rem',marginBottom:'0.7rem'}},
@@ -895,7 +895,7 @@ function rA(el){
   const rd=fr.find(r=>r.id===S.sri);if(!rd){S.sri=fr[fr.length-1].id;render();return}
   el.appendChild(h('div',{style:{display:'flex',gap:'0.5rem',alignItems:'center',marginBottom:'0.7rem'}},h('label',{style:{marginBottom:0}},'Round:'),
     h('select',{class:'sel',style:{flex:1},value:S.sri,onChange:function(){S.sri=this.value;render()}},
-      ...fr.slice().reverse().map(r=>h('option',{value:r.id},`${r.date} — ${r.courseName}${r.player?' ('+r.player+')':''}`)))));
+      ...fr.slice().reverse().map(r=>h('option',{value:r.id},`${r.date} — ${r.courseName}${r.courseTees?" ("+r.courseTees+")":""}${r.player?' ('+r.player+')':''}`)))));
   const st=analyze(rd),ins=genInsights(st);
   // Conditions
   if(rd.conditions){const c=rd.conditions,tags=[];if(c.greens)tags.push('Greens: '+c.greens);if(c.weather)c.weather.forEach(w=>tags.push(w));
@@ -956,7 +956,7 @@ function rH(el){if(S.rounds.length<2)return;el.appendChild(h('div',{class:'st',s
   cd.appendChild(hd);
   S.rounds.slice().reverse().forEach(r=>{const s=analyze(r),sc2=scoreRound(r);
     cd.appendChild(h('div',{class:'hr',style:{cursor:'pointer'},onClick:()=>{S.sri=r.id;S.av='single';render()}},
-      h('div',{style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontWeight:S.sri===r.id?500:400,color:S.sri===r.id?'var(--fg)':'var(--fg2)'}},r.date+' — '+r.courseName),
+      h('div',{style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontWeight:S.sri===r.id?500:400,color:S.sri===r.id?'var(--fg)':'var(--fg2)'}},r.date+' — '+r.courseName+(r.courseTees?' ('+r.courseTees+')':'')),
       h('div',{style:{textAlign:'center',fontWeight:500}},s.ts+' ('+(s.diff>=0?'+':'')+s.diff+')'),
       h('div',{style:{textAlign:'center'}},s.fwP+'%'),h('div',{style:{textAlign:'center'}},s.girP+'%'),
       h('div',{style:{textAlign:'center',fontWeight:600,color:scoreColor100(sc2.overall)}},sc2.overall!==null?String(sc2.overall):'—')))});
@@ -1230,7 +1230,7 @@ function rR(el){if(!S.rounds.length){el.appendChild(h('div',{class:'card',style:
   fr.slice().reverse().forEach(r=>{const s=analyze(r),sc2=scoreRound(r),c=r.conditions,tags=[];
     if(c){if(c.greens)tags.push(c.greens);if(c.weather)c.weather.forEach(w=>tags.push(w))}
     el.appendChild(h('div',{class:'card',style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0.55rem 0.85rem'}},
-      h('div',null,h('div',{style:{fontWeight:500,fontSize:'0.86rem'}},r.courseName),
+      h('div',null,h('div',{style:{fontWeight:500,fontSize:'0.86rem'}},r.courseName+(r.courseTees?' ('+r.courseTees+')':'')),
         h('div',{style:{fontSize:'0.68rem',color:'var(--fg3)'}},
           `${r.date}${r.player?' · '+r.player:''}${r.handicap!=null?' ('+r.handicap+' hdcp)':''} · ${s.ts} (${s.diff>=0?'+':''}${s.diff}) · IQ: `,
           h('span',{style:{fontWeight:600,color:scoreColor100(sc2.overall)}},sc2.overall!==null?String(sc2.overall):'—')),
