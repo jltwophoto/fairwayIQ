@@ -159,7 +159,9 @@ function getPgaPuttPct(ft){
   return 2;
 }
 
-// ─── SHOT SCORING ENGINE (0-100) ──────────
+// ─── SHOT SCORING ENGINE (0-125) ──────────
+const MAX_SCORE=125;
+
 function scoreShot(shot){
   if(shot.endLie==='Penalty'||shot.endLie==='Hazard')return{total:0,dist:0,lie:0,shape:0,acc:0,reason:'Penalty'};
   if(shot.club==='Putter')return scorePutt(shot);
@@ -167,45 +169,44 @@ function scoreShot(shot){
   const carry=shot.clubDist||0;
   const pgaCarry=PGA_CARRY[shot.club]||150;
 
-  // Distance score (40%): ratio of carry to PGA avg, capped at 100
+  // Distance score (40%): ratio of carry to PGA avg, scaled to 125
   let distScore=0;
   if(carry>0){
     const ratio=carry/pgaCarry;
-    distScore=Math.min(ratio*100,100);
-    // Bonus: if you exceed PGA avg, score is 100
-    if(ratio>=1)distScore=100;
-    // Penalty for very short: below 50% of PGA is harsh
-    if(ratio<0.5)distScore=ratio*100*0.8;
+    if(ratio>=1)distScore=MAX_SCORE; // meets or exceeds PGA = perfect 125
+    else if(ratio>=0.85)distScore=100+(ratio-0.85)/(1-0.85)*25; // 85-100% of PGA = 100-125
+    else if(ratio>=0.5)distScore=ratio/0.85*100; // 50-85% = scaled 0-100
+    else distScore=ratio*100*0.8; // below 50% = harsh penalty
   }
 
   // End lie score (25%)
-  const lieScores={Green:100,Fairway:90,Fringe:70,Rough:40,'Waste Area':30,Bunker:25,Penalty:0,Hazard:0};
-  const lieScore=lieScores[shot.endLie]??50;
+  const lieScores={Green:MAX_SCORE,Fairway:110,Fringe:85,Rough:50,'Waste Area':35,Bunker:30,Penalty:0,Hazard:0};
+  const lieScore=lieScores[shot.endLie]??60;
 
   // Shape score (15%)
-  const shapeScores={Neutral:100,Straight:100,Fade:95,Draw:95,Push:50,Pull:50,Hook:20,Slice:20};
-  const shapeScore=shapeScores[shot.shape]??70;
+  const shapeScores={Neutral:MAX_SCORE,Straight:MAX_SCORE,Fade:118,Draw:118,Push:60,Pull:60,Hook:25,Slice:25};
+  const shapeScore=shapeScores[shot.shape]??85;
 
   // Accuracy score (20%): how close end distance is relative to PGA proximity
-  let accScore=50; // default if no data
+  let accScore=60; // default if no data
   const endDist=parseFloat(shot.endDistToHole);
   const startDist=parseFloat(shot.distToHole);
   if(!isNaN(endDist)&&!isNaN(startDist)&&startDist>0){
     const pgaProxFt=getPgaProx(startDist);
     const endDistFt=endDist*3; // convert yards to approx feet
-    if(endDistFt<=pgaProxFt)accScore=100; // as good or better than PGA avg
+    if(endDistFt<=pgaProxFt*0.5)accScore=MAX_SCORE; // way better than PGA avg
+    else if(endDistFt<=pgaProxFt)accScore=100+(1-endDistFt/pgaProxFt)*50; // better than PGA = 100-125
     else{
       const ratio=pgaProxFt/endDistFt;
       accScore=Math.max(ratio*100,5);
     }
   }else if(!isNaN(endDist)){
-    // No start dist but have end: score based on absolute proximity
-    if(endDist<=3)accScore=95;else if(endDist<=10)accScore=80;
-    else if(endDist<=20)accScore=60;else if(endDist<=40)accScore=40;else accScore=20;
+    if(endDist<=1)accScore=MAX_SCORE;else if(endDist<=3)accScore=115;else if(endDist<=10)accScore=95;
+    else if(endDist<=20)accScore=70;else if(endDist<=40)accScore=45;else accScore=20;
   }
 
   const total=Math.round(distScore*0.4+lieScore*0.25+shapeScore*0.15+accScore*0.2);
-  return{total:Math.min(total,100),dist:Math.round(distScore),lie:Math.round(lieScore),shape:Math.round(shapeScore),acc:Math.round(accScore)};
+  return{total:Math.min(total,MAX_SCORE),dist:Math.round(distScore),lie:Math.round(lieScore),shape:Math.round(shapeScore),acc:Math.round(accScore)};
 }
 
 function scorePutt(shot){
@@ -214,29 +215,29 @@ function scorePutt(shot){
   const distFt=dist*3; // yards to feet approx
   const endFt=endDist*3;
 
-  // If putt was holed (endDist=0 or very small)
   const holed=endDist<=0.3;
   const pgaMakePct=getPgaPuttPct(distFt);
 
   if(holed){
-    // Score based on difficulty: making a hard putt scores higher
-    if(pgaMakePct>=90)return{total:85,dist:0,lie:0,shape:0,acc:85,reason:'Made putt (expected)'};
-    if(pgaMakePct>=60)return{total:90,dist:0,lie:0,shape:0,acc:90,reason:'Made putt (solid)'};
-    if(pgaMakePct>=30)return{total:95,dist:0,lie:0,shape:0,acc:95,reason:'Made putt (great)'};
-    return{total:100,dist:0,lie:0,shape:0,acc:100,reason:'Made putt (exceptional)'};
+    // Making a hard putt scores higher — scale to 125
+    if(pgaMakePct>=90)return{total:100,dist:0,lie:0,shape:0,acc:100,reason:'Made putt (expected)'};
+    if(pgaMakePct>=60)return{total:110,dist:0,lie:0,shape:0,acc:110,reason:'Made putt (solid)'};
+    if(pgaMakePct>=30)return{total:118,dist:0,lie:0,shape:0,acc:118,reason:'Made putt (great)'};
+    return{total:MAX_SCORE,dist:0,lie:0,shape:0,acc:MAX_SCORE,reason:'Made putt (exceptional)'};
   }
 
   // Not holed: score based on leave distance
-  let score=50;
-  if(endFt<=3)score=80; // tap-in range
-  else if(endFt<=6)score=65; // good lag
-  else if(endFt<=10)score=50; // ok
-  else if(endFt<=20)score=30; // poor
+  let score=60;
+  if(endFt<=3)score=95; // tap-in range
+  else if(endFt<=6)score=80; // good lag
+  else if(endFt<=10)score=60; // ok
+  else if(endFt<=20)score=35; // poor
   else score=15; // very poor lag
 
   // Adjust for initial distance: long lag putts leaving it close is better
-  if(distFt>30&&endFt<=6)score=Math.max(score,75);
-  if(distFt>50&&endFt<=10)score=Math.max(score,70);
+  if(distFt>30&&endFt<=3)score=Math.max(score,100);
+  if(distFt>30&&endFt<=6)score=Math.max(score,90);
+  if(distFt>50&&endFt<=10)score=Math.max(score,85);
 
   return{total:Math.round(score),dist:0,lie:0,shape:0,acc:Math.round(score),reason:'Putt not holed'};
 }
@@ -276,12 +277,13 @@ function scoreRound(round){
 
 function scoreColor100(v){
   if(v===null)return'var(--fg3)';
-  if(v>=85)return'var(--positive)';if(v>=70)return'var(--info)';
-  if(v>=50)return'var(--warn)';return'var(--danger)';
+  if(v>=105)return'var(--positive)';if(v>=85)return'var(--info)';
+  if(v>=60)return'var(--warn)';return'var(--danger)';
 }
 function scoreBarColor(v){
-  if(v>=85)return'#2d6a4f';if(v>=70)return'#1d4e89';if(v>=50)return'#b07d10';return'#c1121f';
+  if(v>=105)return'#2d6a4f';if(v>=85)return'#1d4e89';if(v>=60)return'#b07d10';return'#c1121f';
 }
+function scoreBarWidth(v){return Math.min((v||0)/125*100,100)+'%'}
 
 // ─── Storage ───────────────────────────
 const DB={
@@ -314,11 +316,7 @@ const MICKE_GROVE={id:'c_micke_grove',name:'Micke Grove Golf Links',tees:'White'
   {number:18,par:4,yards:352,handicap:6}
 ]};
 
-// Seed preloaded courses if first launch
-(function seedCourses(){
-  const existing=DB.g('courses')||[];
-  if(!existing.find(c=>c.id==='c_micke_grove')){existing.push(MICKE_GROVE);DB.s('courses',existing)}
-})();
+// Seed preloaded courses if first launch — see courses_data.js section below
 
 let S={
   tab:'play',courses:DB.g('courses')||[],rounds:DB.g('rounds')||[],
@@ -335,6 +333,165 @@ function mkS(tee){return{shotNumber:1,lie:tee?'Tee':'Fairway',distToHole:'',club
 function sv(){DB.s('courses',S.courses);DB.s('rounds',S.rounds)}
 function getPlayers(){const names=new Set();S.rounds.forEach(r=>{if(r.player)names.add(r.player)});return[...names].sort()}
 function getFilteredRounds(){if(!S.filterPlayer)return S.rounds;return S.rounds.filter(r=>r.player===S.filterPlayer)}
+
+// ─── Preloaded Courses ─────────────────
+const PRELOADED_COURSES=[
+// MICKE GROVE - White (already exists, keep as is)
+
+// MICKE GROVE - Blue
+{id:'c_micke_grove_blue',name:'Micke Grove Golf Links',tees:'Blue',rating:72.3,slope:126,holes:[
+{number:1,par:4,yards:399,handicap:3},{number:2,par:4,yards:378,handicap:7},{number:3,par:4,yards:335,handicap:9},{number:4,par:3,yards:149,handicap:17},
+{number:5,par:5,yards:500,handicap:1},{number:6,par:3,yards:179,handicap:13},{number:7,par:5,yards:489,handicap:15},{number:8,par:4,yards:356,handicap:11},
+{number:9,par:4,yards:434,handicap:5},{number:10,par:4,yards:364,handicap:14},{number:11,par:5,yards:532,handicap:4},{number:12,par:4,yards:367,handicap:12},
+{number:13,par:4,yards:330,handicap:18},{number:14,par:3,yards:179,handicap:8},{number:15,par:5,yards:584,handicap:2},{number:16,par:3,yards:223,handicap:16},
+{number:17,par:4,yards:378,handicap:10},{number:18,par:4,yards:389,handicap:6}]},
+
+// SPANOS PARK - White (6070)
+{id:'c_spanos_white',name:'Reserve at Spanos Park',tees:'White',rating:69.3,slope:127,holes:[
+{number:1,par:4,yards:303,handicap:15},{number:2,par:5,yards:475,handicap:1},{number:3,par:4,yards:373,handicap:5},{number:4,par:3,yards:156,handicap:17},
+{number:5,par:4,yards:354,handicap:7},{number:6,par:5,yards:463,handicap:9},{number:7,par:4,yards:378,handicap:3},{number:8,par:3,yards:174,handicap:13},
+{number:9,par:4,yards:352,handicap:11},{number:10,par:4,yards:337,handicap:12},{number:11,par:5,yards:445,handicap:4},{number:12,par:4,yards:371,handicap:8},
+{number:13,par:3,yards:142,handicap:16},{number:14,par:4,yards:395,handicap:6},{number:15,par:3,yards:153,handicap:18},{number:16,par:5,yards:459,handicap:10},
+{number:17,par:4,yards:372,handicap:2},{number:18,par:4,yards:368,handicap:14}]},
+
+// SPANOS PARK - Blue (6550)
+{id:'c_spanos_blue',name:'Reserve at Spanos Park',tees:'Blue',rating:71.7,slope:129,holes:[
+{number:1,par:4,yards:327,handicap:15},{number:2,par:5,yards:512,handicap:1},{number:3,par:4,yards:402,handicap:5},{number:4,par:3,yards:168,handicap:17},
+{number:5,par:4,yards:382,handicap:7},{number:6,par:5,yards:499,handicap:9},{number:7,par:4,yards:408,handicap:3},{number:8,par:3,yards:188,handicap:13},
+{number:9,par:4,yards:379,handicap:11},{number:10,par:4,yards:363,handicap:12},{number:11,par:5,yards:480,handicap:4},{number:12,par:4,yards:400,handicap:8},
+{number:13,par:3,yards:153,handicap:16},{number:14,par:4,yards:425,handicap:6},{number:15,par:3,yards:165,handicap:18},{number:16,par:5,yards:495,handicap:10},
+{number:17,par:4,yards:401,handicap:2},{number:18,par:4,yards:403,handicap:14}]},
+
+// TURLOCK GOLF & CC - Blue (estimated ~6400, par 72)
+{id:'c_turlock_blue',name:'Turlock Golf & Country Club',tees:'Blue',rating:71.0,slope:126,holes:[
+{number:1,par:4,yards:385,handicap:7},{number:2,par:4,yards:410,handicap:1},{number:3,par:3,yards:175,handicap:15},{number:4,par:5,yards:520,handicap:5},
+{number:5,par:4,yards:370,handicap:9},{number:6,par:4,yards:340,handicap:13},{number:7,par:3,yards:165,handicap:17},{number:8,par:5,yards:505,handicap:3},
+{number:9,par:4,yards:395,handicap:11},{number:10,par:4,yards:380,handicap:8},{number:11,par:5,yards:490,handicap:4},{number:12,par:3,yards:155,handicap:16},
+{number:13,par:4,yards:365,handicap:10},{number:14,par:4,yards:400,handicap:2},{number:15,par:4,yards:350,handicap:12},{number:16,par:3,yards:185,handicap:18},
+{number:17,par:5,yards:480,handicap:6},{number:18,par:4,yards:370,handicap:14}]},
+
+// CREEKSIDE - Blue (6610)
+{id:'c_creekside_blue',name:'Creekside Golf Course',tees:'Blue',rating:71.2,slope:117,holes:[
+{number:1,par:4,yards:388,handicap:5},{number:2,par:4,yards:346,handicap:13},{number:3,par:5,yards:530,handicap:1},{number:4,par:3,yards:175,handicap:15},
+{number:5,par:4,yards:405,handicap:3},{number:6,par:4,yards:355,handicap:11},{number:7,par:3,yards:168,handicap:17},{number:8,par:5,yards:515,handicap:7},
+{number:9,par:4,yards:410,handicap:9},{number:10,par:4,yards:370,handicap:6},{number:11,par:3,yards:160,handicap:16},{number:12,par:5,yards:525,handicap:2},
+{number:13,par:4,yards:380,handicap:10},{number:14,par:4,yards:345,handicap:14},{number:15,par:3,yards:185,handicap:18},{number:16,par:4,yards:415,handicap:4},
+{number:17,par:5,yards:510,handicap:8},{number:18,par:4,yards:428,handicap:12}]},
+
+// CREEKSIDE - White (6021)
+{id:'c_creekside_white',name:'Creekside Golf Course',tees:'White',rating:68.8,slope:113,holes:[
+{number:1,par:4,yards:354,handicap:5},{number:2,par:4,yards:315,handicap:13},{number:3,par:5,yards:483,handicap:1},{number:4,par:3,yards:159,handicap:15},
+{number:5,par:4,yards:369,handicap:3},{number:6,par:4,yards:324,handicap:11},{number:7,par:3,yards:153,handicap:17},{number:8,par:5,yards:470,handicap:7},
+{number:9,par:4,yards:374,handicap:9},{number:10,par:4,yards:337,handicap:6},{number:11,par:3,yards:146,handicap:16},{number:12,par:5,yards:479,handicap:2},
+{number:13,par:4,yards:346,handicap:10},{number:14,par:4,yards:314,handicap:14},{number:15,par:3,yards:169,handicap:18},{number:16,par:4,yards:378,handicap:4},
+{number:17,par:5,yards:465,handicap:8},{number:18,par:4,yards:386,handicap:12}]},
+
+// DRYDEN PARK - Blue (6574)
+{id:'c_dryden_blue',name:'Dryden Park Golf Course',tees:'Blue',rating:69.3,slope:119,holes:[
+{number:1,par:4,yards:368,handicap:9},{number:2,par:5,yards:498,handicap:3},{number:3,par:4,yards:385,handicap:5},{number:4,par:3,yards:170,handicap:17},
+{number:5,par:4,yards:395,handicap:1},{number:6,par:4,yards:350,handicap:11},{number:7,par:3,yards:155,handicap:15},{number:8,par:5,yards:510,handicap:7},
+{number:9,par:4,yards:405,handicap:13},{number:10,par:4,yards:375,handicap:8},{number:11,par:4,yards:345,handicap:14},{number:12,par:3,yards:165,handicap:16},
+{number:13,par:5,yards:485,handicap:4},{number:14,par:4,yards:380,handicap:2},{number:15,par:4,yards:360,handicap:10},{number:16,par:3,yards:180,handicap:18},
+{number:17,par:5,yards:520,handicap:6},{number:18,par:4,yards:428,handicap:12}]},
+
+// DRYDEN PARK - White (~6100)
+{id:'c_dryden_white',name:'Dryden Park Golf Course',tees:'White',rating:67.5,slope:115,holes:[
+{number:1,par:4,yards:342,handicap:9},{number:2,par:5,yards:462,handicap:3},{number:3,par:4,yards:358,handicap:5},{number:4,par:3,yards:158,handicap:17},
+{number:5,par:4,yards:367,handicap:1},{number:6,par:4,yards:325,handicap:11},{number:7,par:3,yards:144,handicap:15},{number:8,par:5,yards:474,handicap:7},
+{number:9,par:4,yards:376,handicap:13},{number:10,par:4,yards:348,handicap:8},{number:11,par:4,yards:320,handicap:14},{number:12,par:3,yards:153,handicap:16},
+{number:13,par:5,yards:450,handicap:4},{number:14,par:4,yards:353,handicap:2},{number:15,par:4,yards:335,handicap:10},{number:16,par:3,yards:167,handicap:18},
+{number:17,par:5,yards:483,handicap:6},{number:18,par:4,yards:385,handicap:12}]},
+
+// POPPY HILLS - White (~6300, par 71)
+{id:'c_poppy_white',name:'Poppy Hills Golf Course',tees:'White',rating:71.5,slope:135,holes:[
+{number:1,par:4,yards:370,handicap:7},{number:2,par:5,yards:490,handicap:3},{number:3,par:4,yards:345,handicap:13},{number:4,par:4,yards:378,handicap:1},
+{number:5,par:3,yards:155,handicap:15},{number:6,par:4,yards:390,handicap:5},{number:7,par:4,yards:355,handicap:11},{number:8,par:3,yards:175,handicap:17},
+{number:9,par:4,yards:390,handicap:9},{number:10,par:5,yards:468,handicap:6},{number:11,par:3,yards:143,handicap:16},{number:12,par:4,yards:399,handicap:4},
+{number:13,par:4,yards:355,handicap:12},{number:14,par:4,yards:342,handicap:10},{number:15,par:3,yards:197,handicap:14},{number:16,par:4,yards:396,handicap:2},
+{number:17,par:3,yards:174,handicap:18},{number:18,par:5,yards:457,handicap:8}]},
+
+// POPPY HILLS - Blue (~6700, par 71)
+{id:'c_poppy_blue',name:'Poppy Hills Golf Course',tees:'Blue',rating:73.2,slope:140,holes:[
+{number:1,par:4,yards:394,handicap:7},{number:2,par:5,yards:521,handicap:3},{number:3,par:4,yards:367,handicap:13},{number:4,par:4,yards:402,handicap:1},
+{number:5,par:3,yards:165,handicap:15},{number:6,par:4,yards:415,handicap:5},{number:7,par:4,yards:378,handicap:11},{number:8,par:3,yards:186,handicap:17},
+{number:9,par:4,yards:415,handicap:9},{number:10,par:5,yards:498,handicap:6},{number:11,par:3,yards:152,handicap:16},{number:12,par:4,yards:424,handicap:4},
+{number:13,par:4,yards:378,handicap:12},{number:14,par:4,yards:364,handicap:10},{number:15,par:3,yards:210,handicap:14},{number:16,par:4,yards:421,handicap:2},
+{number:17,par:3,yards:185,handicap:18},{number:18,par:5,yards:486,handicap:8}]},
+
+// BAYONET - White (~6200, par 72)
+{id:'c_bayonet_white',name:'Bayonet Golf Course',tees:'White',rating:70.2,slope:131,holes:[
+{number:1,par:4,yards:348,handicap:11},{number:2,par:4,yards:370,handicap:3},{number:3,par:5,yards:475,handicap:13},{number:4,par:3,yards:155,handicap:17},
+{number:5,par:4,yards:380,handicap:5},{number:6,par:4,yards:340,handicap:9},{number:7,par:3,yards:175,handicap:15},{number:8,par:4,yards:365,handicap:1},
+{number:9,par:5,yards:470,handicap:7},{number:10,par:4,yards:330,handicap:12},{number:11,par:3,yards:185,handicap:16},{number:12,par:4,yards:375,handicap:4},
+{number:13,par:5,yards:490,handicap:8},{number:14,par:3,yards:165,handicap:18},{number:15,par:4,yards:395,handicap:2},{number:16,par:4,yards:360,handicap:10},
+{number:17,par:4,yards:345,handicap:6},{number:18,par:5,yards:480,handicap:14}]},
+
+// BAYONET - Blue (~6600, par 72)
+{id:'c_bayonet_blue',name:'Bayonet Golf Course',tees:'Blue',rating:72.5,slope:136,holes:[
+{number:1,par:4,yards:377,handicap:11},{number:2,par:4,yards:400,handicap:3},{number:3,par:5,yards:515,handicap:13},{number:4,par:3,yards:168,handicap:17},
+{number:5,par:4,yards:412,handicap:5},{number:6,par:4,yards:368,handicap:9},{number:7,par:3,yards:190,handicap:15},{number:8,par:4,yards:395,handicap:1},
+{number:9,par:5,yards:510,handicap:7},{number:10,par:4,yards:358,handicap:12},{number:11,par:3,yards:200,handicap:16},{number:12,par:4,yards:406,handicap:4},
+{number:13,par:5,yards:532,handicap:8},{number:14,par:3,yards:179,handicap:18},{number:15,par:4,yards:428,handicap:2},{number:16,par:4,yards:390,handicap:10},
+{number:17,par:4,yards:374,handicap:6},{number:18,par:5,yards:520,handicap:14}]},
+
+// BLACK HORSE - White (5915)
+{id:'c_blackhorse_white',name:'Black Horse Golf Course',tees:'White',rating:69.4,slope:125,holes:[
+{number:1,par:4,yards:340,handicap:9},{number:2,par:3,yards:150,handicap:17},{number:3,par:4,yards:310,handicap:13},{number:4,par:3,yards:155,handicap:15},
+{number:5,par:5,yards:475,handicap:3},{number:6,par:4,yards:365,handicap:1},{number:7,par:4,yards:330,handicap:11},{number:8,par:4,yards:345,handicap:5},
+{number:9,par:5,yards:460,handicap:7},{number:10,par:4,yards:335,handicap:10},{number:11,par:4,yards:355,handicap:4},{number:12,par:3,yards:165,handicap:18},
+{number:13,par:5,yards:480,handicap:6},{number:14,par:4,yards:280,handicap:16},{number:15,par:3,yards:175,handicap:14},{number:16,par:5,yards:490,handicap:8},
+{number:17,par:4,yards:350,handicap:2},{number:18,par:4,yards:355,handicap:12}]},
+
+// BLACK HORSE - Blue (6542)
+{id:'c_blackhorse_blue',name:'Black Horse Golf Course',tees:'Blue',rating:71.6,slope:132,holes:[
+{number:1,par:4,yards:376,handicap:9},{number:2,par:3,yards:166,handicap:17},{number:3,par:4,yards:343,handicap:13},{number:4,par:3,yards:171,handicap:15},
+{number:5,par:5,yards:525,handicap:3},{number:6,par:4,yards:404,handicap:1},{number:7,par:4,yards:365,handicap:11},{number:8,par:4,yards:382,handicap:5},
+{number:9,par:5,yards:509,handicap:7},{number:10,par:4,yards:371,handicap:10},{number:11,par:4,yards:393,handicap:4},{number:12,par:3,yards:183,handicap:18},
+{number:13,par:5,yards:531,handicap:6},{number:14,par:4,yards:310,handicap:16},{number:15,par:3,yards:194,handicap:14},{number:16,par:5,yards:542,handicap:8},
+{number:17,par:4,yards:387,handicap:2},{number:18,par:4,yards:390,handicap:12}]},
+
+// BEND GOLF CLUB - Blue (6529) - EXACT from scorecard PDF
+{id:'c_bend_blue',name:'Bend Golf Club',tees:'Blue',rating:71.2,slope:127,holes:[
+{number:1,par:4,yards:366,handicap:5},{number:2,par:5,yards:532,handicap:1},{number:3,par:3,yards:139,handicap:17},{number:4,par:4,yards:399,handicap:3},
+{number:5,par:4,yards:350,handicap:15},{number:6,par:3,yards:194,handicap:13},{number:7,par:4,yards:364,handicap:9},{number:8,par:4,yards:384,handicap:7},
+{number:9,par:5,yards:509,handicap:11},{number:10,par:4,yards:382,handicap:10},{number:11,par:3,yards:121,handicap:18},{number:12,par:4,yards:405,handicap:4},
+{number:13,par:5,yards:510,handicap:14},{number:14,par:4,yards:363,handicap:6},{number:15,par:5,yards:500,handicap:12},{number:16,par:3,yards:162,handicap:16},
+{number:17,par:4,yards:456,handicap:2},{number:18,par:4,yards:393,handicap:8}]},
+
+// BEND GOLF CLUB - Green (4552) - EXACT from scorecard PDF
+{id:'c_bend_green',name:'Bend Golf Club',tees:'Green',rating:61.7,slope:113,holes:[
+{number:1,par:4,yards:220,handicap:5},{number:2,par:5,yards:407,handicap:1},{number:3,par:3,yards:95,handicap:17},{number:4,par:4,yards:280,handicap:3},
+{number:5,par:4,yards:228,handicap:15},{number:6,par:3,yards:140,handicap:13},{number:7,par:4,yards:236,handicap:9},{number:8,par:4,yards:237,handicap:7},
+{number:9,par:5,yards:401,handicap:11},{number:10,par:4,yards:294,handicap:10},{number:11,par:3,yards:80,handicap:18},{number:12,par:4,yards:291,handicap:4},
+{number:13,par:5,yards:366,handicap:14},{number:14,par:4,yards:248,handicap:6},{number:15,par:5,yards:367,handicap:12},{number:16,par:3,yards:102,handicap:16},
+{number:17,par:4,yards:310,handicap:2},{number:18,par:4,yards:250,handicap:8}]},
+
+// SNOQUALMIE RIDGE - Blue (~6700, par 72)
+{id:'c_snoqualmie_blue',name:'Club at Snoqualmie Ridge',tees:'Blue',rating:73.0,slope:138,holes:[
+{number:1,par:4,yards:390,handicap:7},{number:2,par:5,yards:525,handicap:3},{number:3,par:4,yards:405,handicap:5},{number:4,par:3,yards:185,handicap:15},
+{number:5,par:4,yards:380,handicap:9},{number:6,par:4,yards:355,handicap:13},{number:7,par:3,yards:195,handicap:17},{number:8,par:5,yards:530,handicap:1},
+{number:9,par:4,yards:415,handicap:11},{number:10,par:4,yards:395,handicap:8},{number:11,par:3,yards:175,handicap:18},{number:12,par:4,yards:420,handicap:2},
+{number:13,par:5,yards:510,handicap:6},{number:14,par:4,yards:290,handicap:16},{number:15,par:4,yards:385,handicap:10},{number:16,par:3,yards:205,handicap:14},
+{number:17,par:5,yards:515,handicap:4},{number:18,par:4,yards:425,handicap:12}]},
+
+// SNOQUALMIE RIDGE - White (~6200, par 72)
+{id:'c_snoqualmie_white',name:'Club at Snoqualmie Ridge',tees:'White',rating:70.5,slope:132,holes:[
+{number:1,par:4,yards:360,handicap:7},{number:2,par:5,yards:485,handicap:3},{number:3,par:4,yards:374,handicap:5},{number:4,par:3,yards:171,handicap:15},
+{number:5,par:4,yards:351,handicap:9},{number:6,par:4,yards:328,handicap:13},{number:7,par:3,yards:180,handicap:17},{number:8,par:5,yards:490,handicap:1},
+{number:9,par:4,yards:383,handicap:11},{number:10,par:4,yards:365,handicap:8},{number:11,par:3,yards:162,handicap:18},{number:12,par:4,yards:388,handicap:2},
+{number:13,par:5,yards:471,handicap:6},{number:14,par:4,yards:268,handicap:16},{number:15,par:4,yards:356,handicap:10},{number:16,par:3,yards:189,handicap:14},
+{number:17,par:5,yards:476,handicap:4},{number:18,par:4,yards:393,handicap:12}]}
+];
+
+// Seed all preloaded courses
+(function seedCourses(){
+  const existing=DB.g('courses')||[];
+  const ids=new Set(existing.map(c=>c.id));
+  // Keep Micke Grove White that was already there
+  if(!ids.has('c_micke_grove')){existing.push(MICKE_GROVE);ids.add('c_micke_grove')}
+  PRELOADED_COURSES.forEach(c=>{if(!ids.has(c.id)){existing.push(c);ids.add(c.id)}});
+  DB.s('courses',existing);
+})();
 
 // ─── DOM ───────────────────────────────
 function h(t,a,...c){const e=document.createElement(t);if(a)Object.entries(a).forEach(([k,v])=>{if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==='style'&&typeof v==='object')Object.assign(e.style,v);else if(k==='disabled'){if(v)e.setAttribute('disabled','');else e.removeAttribute('disabled')}else if(k==='selected'&&v)e.selected=true;else if(k==='value'){e._deferValue=v}else e.setAttribute(k,v)});c.flat(Infinity).forEach(x=>{if(x!=null&&x!==false)e.appendChild(typeof x==='string'||typeof x==='number'?document.createTextNode(String(x)):x)});if(e._deferValue!==undefined){e.value=e._deferValue;delete e._deferValue}return e}
@@ -592,7 +749,7 @@ function rScores(el){
     h('div',{style:{fontSize:'0.6rem',color:'var(--fg3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:'0.3rem'}},'Overall round score'),
     h('div',{style:{fontSize:'3rem',fontWeight:600,fontFamily:'var(--font-display)',color:scoreColor100(scores.overall)}},scores.overall!==null?String(scores.overall):'—'),
     h('div',{style:{fontSize:'0.72rem',color:'var(--fg3)',marginTop:'0.2rem'}},`${stat.ts} strokes · Par ${stat.tp} · ${stat.diff>=0?'+':''}${stat.diff}`),
-    h('div',{class:'cat-bar',style:{maxWidth:'200px',margin:'0.6rem auto 0'}},h('div',{class:'cat-fill',style:{width:(scores.overall||0)+'%',background:scoreBarColor(scores.overall||0)}}))
+    h('div',{class:'cat-bar',style:{maxWidth:'200px',margin:'0.6rem auto 0'}},h('div',{class:'cat-fill',style:{width:scoreBarWidth(scores.overall),background:scoreBarColor(scores.overall||0)}}))
   ));
 
   // Category scores
@@ -603,7 +760,7 @@ function rScores(el){
       h('div',{class:'cat-score',style:{color:scoreColor100(c.score)}},c.score!==null?String(c.score):'—'),
       h('div',{class:'cat-label'},cat.label),
       h('div',{style:{fontSize:'0.58rem',color:'var(--fg3)',marginTop:'0.1rem'}},c.count+' shots'),
-      h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:(c.score||0)+'%',background:scoreBarColor(c.score||0)}}))
+      h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:scoreBarWidth(c.score),background:scoreBarColor(c.score||0)}}))
     ));
   });
   el.appendChild(catGrid);
@@ -622,7 +779,7 @@ function rScores(el){
         h('div',{class:'score-club-name'},item.label),
         h('div',{class:'score-club-detail'},item.pgaRef)),
       h('div',{class:'score-value',style:{color:scoreColor100(item.score)}},item.score!==null?String(item.score):'—'),
-      h('div',{style:{width:'80px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:(item.score||0)+'%',background:scoreBarColor(item.score||0)}})))
+      h('div',{style:{width:'80px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:scoreBarWidth(item.score),background:scoreBarColor(item.score||0)}})))
     );
     benchCard.appendChild(sec);
   });
@@ -649,7 +806,7 @@ function rScores(el){
         h('div',{class:'score-club-detail'},
           `${data.scores.length} shots${avgDist?` · Avg ${avgDist}y`:''}`+(pgaCarry&&club!=='Putter'?` · PGA: ${pgaCarry}y`:''))),
       h('div',{class:'score-value',style:{color:scoreColor100(avg)}},String(avg)),
-      h('div',{style:{width:'70px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:avg+'%',background:scoreBarColor(avg)}})))
+      h('div',{style:{width:'70px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:scoreBarWidth(avg),background:scoreBarColor(avg)}})))
     );
     clubCard.appendChild(sec);
   });
@@ -669,7 +826,7 @@ function rScores(el){
         {label:'Irons',data:allScores.map(s=>s.irons.score),borderColor:'#b07d10',tension:0.3,pointRadius:3,borderDash:[5,3]},
         {label:'Putting',data:allScores.map(s=>s.putting.score),borderColor:'#c1121f',tension:0.3,pointRadius:3,borderDash:[5,3]}]},
         options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}}},
-          scales:{y:{min:0,max:100,grid:{color:'rgba(128,128,128,0.06)'}},x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45}}}}}))},50);
+          scales:{y:{min:0,max:125,grid:{color:'rgba(128,128,128,0.06)'}},x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45}}}}}))},50);
   }
 }
 
@@ -687,14 +844,14 @@ function rCumScores(el){
   el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'1.25rem'}},
     h('div',{style:{fontSize:'0.6rem',color:'var(--fg3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:'0.3rem'}},'Cumulative score ('+S.rounds.length+' rounds)'),
     h('div',{style:{fontSize:'3rem',fontWeight:600,fontFamily:'var(--font-display)',color:scoreColor100(cumOverall)}},cumOverall!==null?String(cumOverall):'—'),
-    h('div',{class:'cat-bar',style:{maxWidth:'200px',margin:'0.5rem auto 0'}},h('div',{class:'cat-fill',style:{width:(cumOverall||0)+'%',background:scoreBarColor(cumOverall||0)}}))
+    h('div',{class:'cat-bar',style:{maxWidth:'200px',margin:'0.5rem auto 0'}},h('div',{class:'cat-fill',style:{width:scoreBarWidth(cumOverall),background:scoreBarColor(cumOverall||0)}}))
   ));
 
   el.appendChild(h('div',{class:'mg c4',style:{marginBottom:'0.75rem'}},
-    h('div',{class:'metric cat-card'},h('div',{class:'cat-score',style:{color:scoreColor100(cumDriving)}},cumDriving??'—'),h('div',{class:'cat-label'},'Driving'),h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:(cumDriving||0)+'%',background:scoreBarColor(cumDriving||0)}}))),
-    h('div',{class:'metric cat-card'},h('div',{class:'cat-score',style:{color:scoreColor100(cumIrons)}},cumIrons??'—'),h('div',{class:'cat-label'},'Irons'),h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:(cumIrons||0)+'%',background:scoreBarColor(cumIrons||0)}}))),
-    h('div',{class:'metric cat-card'},h('div',{class:'cat-score',style:{color:scoreColor100(cumShort)}},cumShort??'—'),h('div',{class:'cat-label'},'Short game'),h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:(cumShort||0)+'%',background:scoreBarColor(cumShort||0)}}))),
-    h('div',{class:'metric cat-card'},h('div',{class:'cat-score',style:{color:scoreColor100(cumPutt)}},cumPutt??'—'),h('div',{class:'cat-label'},'Putting'),h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:(cumPutt||0)+'%',background:scoreBarColor(cumPutt||0)}})))
+    h('div',{class:'metric cat-card'},h('div',{class:'cat-score',style:{color:scoreColor100(cumDriving)}},cumDriving??'—'),h('div',{class:'cat-label'},'Driving'),h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:scoreBarWidth(cumDriving),background:scoreBarColor(cumDriving||0)}}))),
+    h('div',{class:'metric cat-card'},h('div',{class:'cat-score',style:{color:scoreColor100(cumIrons)}},cumIrons??'—'),h('div',{class:'cat-label'},'Irons'),h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:scoreBarWidth(cumIrons),background:scoreBarColor(cumIrons||0)}}))),
+    h('div',{class:'metric cat-card'},h('div',{class:'cat-score',style:{color:scoreColor100(cumShort)}},cumShort??'—'),h('div',{class:'cat-label'},'Short game'),h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:scoreBarWidth(cumShort),background:scoreBarColor(cumShort||0)}}))),
+    h('div',{class:'metric cat-card'},h('div',{class:'cat-score',style:{color:scoreColor100(cumPutt)}},cumPutt??'—'),h('div',{class:'cat-label'},'Putting'),h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:scoreBarWidth(cumPutt),background:scoreBarColor(cumPutt||0)}})))
   ));
 
   // Cumulative club distances
@@ -713,7 +870,7 @@ function rCumScores(el){
       h('div',{class:'score-info'},h('div',{class:'score-club-name'},club),
         h('div',{class:'score-club-detail'},`${d.scores.length} shots${avgDist?` · Avg ${avgDist}y`:''}${pga&&club!=='Putter'?` · PGA ${pga}y`:''}`)),
       h('div',{class:'score-value',style:{color:scoreColor100(avgScore)}},String(avgScore)),
-      h('div',{style:{width:'70px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:avgScore+'%',background:scoreBarColor(avgScore)}})))));
+      h('div',{style:{width:'70px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:scoreBarWidth(avgScore),background:scoreBarColor(avgScore)}})))));
   });
   el.appendChild(tbl);
 
@@ -726,7 +883,7 @@ function rCumScores(el){
       {label:'Driving',data:allScored.map(s=>s.driving.score),borderColor:'#1d4e89',tension:0.3,pointRadius:2,borderDash:[4,3]},
       {label:'Putting',data:allScored.map(s=>s.putting.score),borderColor:'#c1121f',tension:0.3,pointRadius:2,borderDash:[4,3]}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}}},
-        scales:{y:{min:0,max:100,grid:{color:'rgba(128,128,128,0.06)'}},x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45}}}}}))},50);
+        scales:{y:{min:0,max:125,grid:{color:'rgba(128,128,128,0.06)'}},x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45}}}}}))},50);
 }
 
 // ─── ANALYSIS TAB ──────────────────────
@@ -932,7 +1089,7 @@ function rGoals(el){
       h('div',{style:{display:'flex',alignItems:'center',gap:'0.5rem'}},
         h('span',{style:{fontSize:'0.62rem',color:'var(--fg3)',textTransform:'uppercase'}},'Score'),
         h('span',{style:{fontSize:'1.2rem',fontWeight:600,fontFamily:'var(--font-display)',color:scoreColor100(area.score)}},String(area.score)),
-        h('div',{style:{width:'50px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:area.score+'%',background:scoreBarColor(area.score)}})))
+        h('div',{style:{width:'50px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:scoreBarWidth(area.score),background:scoreBarColor(area.score)}})))
       )
     ));
 
@@ -959,7 +1116,7 @@ function rGoals(el){
           h('div',{class:'score-club-name'},cw.club),
           h('div',{class:'score-club-detail'},cw.count+' total shots'+(PGA_CARRY[cw.club]?' · PGA benchmark: '+PGA_CARRY[cw.club]+'y':''))),
         h('div',{class:'score-value',style:{color:scoreColor100(cw.avg)}},String(cw.avg)),
-        h('div',{style:{width:'70px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:cw.avg+'%',background:scoreBarColor(cw.avg)}})))
+        h('div',{style:{width:'70px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:scoreBarWidth(cw.avg),background:scoreBarColor(cw.avg)}})))
       ));
     });
     el.appendChild(tbl);
