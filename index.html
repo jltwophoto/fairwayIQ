@@ -249,6 +249,9 @@ function scoreRound(round){
 
   (round.holes||[]).forEach(hole=>{
     (hole.shots||[]).forEach((shot,idx)=>{
+      // Skip exempt shots from scoring
+      if(shot.exempt){allScores.push({total:null,dist:0,lie:0,shape:0,acc:0,shot,hole:hole.number,exempt:true});return}
+
       const sc=scoreShot(shot);
       allScores.push({...sc,shot,hole:hole.number});
 
@@ -264,14 +267,14 @@ function scoreRound(round){
     });
   });
 
-  const avg=arr=>arr.length?Math.round(arr.reduce((s,v)=>s+v,0)/arr.length):null;
+  const avg=arr=>{const v=arr.filter(x=>x!==null);return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length):null};
   return{
     driving:{score:avg(cats.driving.scores),count:cats.driving.scores.length,shots:cats.driving.shots,scores:cats.driving.scores},
     irons:{score:avg(cats.irons.scores),count:cats.irons.scores.length,shots:cats.irons.shots,scores:cats.irons.scores},
     shortGame:{score:avg(cats.shortGame.scores),count:cats.shortGame.scores.length,shots:cats.shortGame.shots,scores:cats.shortGame.scores},
     putting:{score:avg(cats.putting.scores),count:cats.putting.scores.length,shots:cats.putting.shots,scores:cats.putting.scores},
     allScores,
-    overall:avg(allScores.map(s=>s.total)),
+    overall:avg(allScores.filter(s=>!s.exempt).map(s=>s.total)),
   };
 }
 
@@ -329,7 +332,7 @@ let S={
 };
 
 function mkC(){return{name:'',tees:'White',holes:Array.from({length:18},(_,i)=>({number:i+1,par:4,yards:350,handicap:i+1}))}}
-function mkS(tee){return{shotNumber:1,lie:tee?'Tee':'Fairway',distToHole:'',club:tee?'Dr':'7i',endLie:'Fairway',shape:'Neutral',endDistToHole:'',clubDist:null}}
+function mkS(tee){return{shotNumber:1,lie:tee?'Tee':'Fairway',distToHole:'',club:tee?'Dr':'7i',endLie:'Fairway',shape:'Neutral',endDistToHole:'',clubDist:null,exempt:false}}
 function sv(){DB.s('courses',S.courses);DB.s('rounds',S.rounds)}
 function getPlayers(){const names=new Set();S.rounds.forEach(r=>{if(r.player)names.add(r.player)});return[...names].sort()}
 function getFilteredRounds(){if(!S.filterPlayer)return S.rounds;return S.rounds.filter(r=>r.player===S.filterPlayer)}
@@ -534,7 +537,7 @@ function analyze(rd){
     const fb=shots.filter(x=>x.lie==='Bunker');
     if(fb.length>0){sa++;const li=shots.lastIndexOf(fb[fb.length-1]);if(shots.slice(li+1).filter(x=>x.club==='Putter').length<=1)ss++}
     shots.forEach(x=>{if(x.endLie==='Penalty')pen++;if(x.shape&&x.shape!=='Neutral'&&x.shape!=='Straight')sh[x.shape]=(sh[x.shape]||0)+1;
-      if(x.club&&x.club!=='Putter'){if(!cs[x.club])cs[x.club]={ct:0,ds:[],sh:{}};cs[x.club].ct++;const cd=ccd(x);if(cd>0)cs[x.club].ds.push(cd);if(x.shape)cs[x.club].sh[x.shape]=(cs[x.club].sh[x.shape]||0)+1}
+      if(x.club&&x.club!=='Putter'&&!x.exempt){if(!cs[x.club])cs[x.club]={ct:0,ds:[],sh:{}};cs[x.club].ct++;const cd=ccd(x);if(cd>0)cs[x.club].ds.push(cd);if(x.shape)cs[x.club].sh[x.shape]=(cs[x.club].sh[x.shape]||0)+1}
       if(!DCLUBS.includes(x.club)&&x.club!=='Putter'&&x.endLie&&x.endLie!=='Green')am[x.endLie]=(am[x.endLie]||0)+1});
   });
   const n=H.length||18;
@@ -681,13 +684,13 @@ function rP(el){
 
   if(shots.length>0){const lg=h('div',{style:{borderBottom:'1px solid var(--border)',paddingBottom:'0.4rem',marginBottom:'0.5rem',overflowX:'auto'}});
     lg.appendChild(h('div',{class:'sr hd'},h('div',null,'#'),h('div',null,'Club'),h('div',null,'Lie'),h('div',null,'Dist'),h('div',null,'Shape'),h('div',null,'End'),h('div',null,'EndD'),h('div',null,'Carry'),h('div',null,'Score')));
-    shots.forEach(s=>{const cd2=ccd(s),sc2=scoreShot(s);
-      lg.appendChild(h('div',{class:'sr'},h('div',null,h('div',{class:'sn'},String(s.shotNumber))),h('div',{style:{fontWeight:500}},s.club),
+    shots.forEach(s=>{const cd2=ccd(s),sc2=s.exempt?{total:'EX'}:scoreShot(s);
+      lg.appendChild(h('div',{class:'sr',style:s.exempt?{opacity:0.6}:{}},h('div',null,h('div',{class:'sn'},String(s.shotNumber))),h('div',{style:{fontWeight:500}},s.club),
         h('div',{style:{fontSize:'0.58rem',color:'var(--fg2)'}},s.lie),h('div',null,s.distToHole?s.distToHole+'y':'—'),
         h('div',{style:{fontSize:'0.58rem',color:'var(--fg2)'}},s.shape||'—'),
         h('div',null,h('span',{class:'sb',style:{background:elbg(s.endLie),color:elfg(s.endLie)}},s.endLie)),
         h('div',null,s.endDistToHole?s.endDistToHole+'y':'—'),h('div',{style:{fontWeight:500,color:cd2>0?'var(--accent)':'var(--fg3)'}},cd2>0?cd2+'y':'—'),
-        h('div',{style:{fontWeight:600,color:scoreColor100(sc2.total),fontSize:'0.7rem'}},String(sc2.total))))});
+        h('div',{style:{fontWeight:600,color:s.exempt?'var(--fg3)':scoreColor100(sc2.total),fontSize:'0.7rem'}},s.exempt?'EX':String(sc2.total))))});
     lg.appendChild(h('button',{class:'btn s',style:{marginTop:'0.3rem'},onClick:()=>{S.hs[S.ch]=shots.slice(0,-1);if(!S.hs[S.ch].length)delete S.hs[S.ch];render()}},'Undo'));
     cd.appendChild(lg)}
 
@@ -707,11 +710,21 @@ function rP(el){
     h('div',null,h('label',null,'Club dist (calc)'),h('div',{style:{padding:'0.4rem 0.5rem',fontSize:'0.8rem',fontWeight:500,color:'var(--accent)',background:'var(--bg2)',borderRadius:'var(--radius)'}},
       (()=>{const a=parseFloat(cs.distToHole),b=parseFloat(cs.endDistToHole);return(!isNaN(a)&&!isNaN(b)&&a>0)?Math.abs(a-b)+' yds':'—'})())),h('div'));
   cd.appendChild(fm);cd.appendChild(fm2);
+
+  // Exempt shot checkbox
+  const exemptRow=h('div',{style:{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.5rem',marginTop:'0.2rem'}});
+  const exemptCb=h('input',{type:'checkbox',style:{width:'16px',height:'16px',cursor:'pointer',accentColor:'var(--accent)'},
+    onChange:function(){cs.exempt=this.checked}});
+  if(cs.exempt)exemptCb.checked=true;
+  exemptRow.append(exemptCb,h('span',{style:{fontSize:'0.74rem',color:'var(--fg2)',cursor:'pointer'},onClick:function(){exemptCb.checked=!exemptCb.checked;cs.exempt=exemptCb.checked}},'Exempt shot'),
+    h('span',{style:{fontSize:'0.6rem',color:'var(--fg3)',fontStyle:'italic'}},'(excludes from club scoring — use for punch-outs, intentional layups, etc.)'));
+  cd.appendChild(exemptRow);
+
   cd.appendChild(h('button',{class:'btn p',onClick:()=>{
     const ns={...cs,shotNumber:shots.length+1};const a=parseFloat(cs.distToHole),b=parseFloat(cs.endDistToHole);
     ns.clubDist=(!isNaN(a)&&!isNaN(b)&&a>0)?Math.abs(a-b):null;
     const nw=[...shots,ns];S.hs[S.ch]=nw;const og=ns.endLie==='Green';const nl=ns.endLie==='Penalty'?ns.lie:ns.endLie;
-    S.cs={shotNumber:nw.length+1,lie:og?'Green':(LIES.includes(nl)?nl:'Fairway'),distToHole:ns.endDistToHole||'',club:og?'Putter':'7i',endLie:og?'Green':'Green',shape:'Neutral',endDistToHole:'',clubDist:null};render()}},'Log shot'));
+    S.cs={shotNumber:nw.length+1,lie:og?'Green':(LIES.includes(nl)?nl:'Fairway'),distToHole:ns.endDistToHole||'',club:og?'Putter':'7i',endLie:og?'Green':'Green',shape:'Neutral',endDistToHole:'',clubDist:null,exempt:false};render()}},'Log shot'));
   el.appendChild(cd);
   el.appendChild(h('div',{style:{display:'flex',justifyContent:'center',marginTop:'1rem'}},
     h('button',{class:'btn p',disabled:hp===0||!S.playerName.trim(),style:{fontSize:'0.9rem',padding:'0.65rem 2rem'},onClick:()=>{
