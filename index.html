@@ -3,1392 +3,622 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fairway IQ — Golf Performance Lab</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&display=swap" rel="stylesheet">
+<title>The Path to 0 — Round Tracker</title>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
---bg:#faf9f6;--bg2:#f0eeea;--bg3:#e8e5df;--fg:#1a1a18;--fg2:#5c5b56;--fg3:#8a8880;
---accent:#2d6a4f;--accent2:#40916c;--accent-light:#d8f3dc;--accent-dark:#1b4332;
---danger:#c1121f;--danger-light:#fde8e8;--warn:#b07d10;--warn-light:#fef3cd;
---info:#1d4e89;--info-light:#dbeafe;--positive:#2d6a4f;--positive-light:#d8f3dc;
---border:#d4d1ca;--border2:#c0bdb5;--card:#ffffff;--card-shadow:0 1px 3px rgba(0,0,0,0.04);
---radius:10px;--radius-lg:14px;--font-body:'DM Sans',sans-serif;--font-display:'Fraunces',serif;
---eagle:#d4a017;--birdie:#c1121f;--par:#2d6a4f;--bogey:#1d4e89;--double:#6c4ab6;--triple:#4a3096;
-}
-@media(prefers-color-scheme:dark){:root{
---bg:#141413;--bg2:#1e1e1c;--bg3:#2a2a27;--fg:#e8e5df;--fg2:#a8a5a0;--fg3:#706e69;
---accent:#52b788;--accent2:#74c69d;--accent-light:#1b4332;--accent-dark:#b7e4c7;
---danger:#e74c5e;--danger-light:#3d1418;--warn:#e0a82e;--warn-light:#3d2e06;
---info:#5b9bd5;--info-light:#162a44;--positive:#52b788;--positive-light:#1b4332;
---border:#3a3935;--border2:#4a4945;--card:#1e1e1c;--card-shadow:0 1px 3px rgba(0,0,0,0.2);
---eagle:#e0b838;--birdie:#e74c5e;--par:#52b788;--bogey:#5b9bd5;--double:#9b85e0;--triple:#7c65d0;
-}}
-html{font-size:16px}body{font-family:var(--font-body);background:var(--bg);color:var(--fg);line-height:1.55;min-height:100vh}
-.app{max-width:860px;margin:0 auto;padding:1rem 1.25rem 3rem}
-.header{display:flex;align-items:baseline;gap:0.75rem;margin-bottom:1.75rem;padding-top:0.5rem}
-.header h1{font-family:var(--font-display);font-size:1.65rem;font-weight:600;letter-spacing:-0.03em}
-.header span{font-size:0.7rem;font-weight:500;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase}
-.tabs{display:flex;gap:0;border-bottom:1.5px solid var(--border);margin-bottom:1.5rem;overflow-x:auto}
-.tab{padding:0.65rem 1.1rem;font-size:0.8rem;font-weight:500;color:var(--fg3);cursor:pointer;border:none;background:none;border-bottom:2.5px solid transparent;transition:all 0.2s;white-space:nowrap;font-family:var(--font-body)}
-.tab:hover{color:var(--fg2)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem 1.25rem;box-shadow:var(--card-shadow);margin-bottom:0.75rem}
-.metric{background:var(--bg2);border-radius:var(--radius);padding:0.65rem 0.85rem}
-.metric-label{font-size:0.6rem;color:var(--fg3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.1rem}
-.metric-val{font-size:1.15rem;font-weight:600;font-family:var(--font-display)}
-.metric-sub{font-size:0.64rem;color:var(--fg3);margin-top:0.06rem}
-.mg{display:grid;gap:0.5rem;margin-bottom:0.55rem}.c4{grid-template-columns:repeat(4,1fr)}.c3{grid-template-columns:repeat(3,1fr)}.c2{grid-template-columns:1fr 1fr}
-@media(max-width:600px){.c4,.c3{grid-template-columns:repeat(2,1fr)}}
-.st{font-family:var(--font-display);font-size:1.02rem;font-weight:600;margin-bottom:0.7rem;letter-spacing:-0.01em}
-.btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 1rem;font-size:0.78rem;font-weight:500;border-radius:var(--radius);cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--fg);font-family:var(--font-body);transition:all 0.15s}
-.btn:hover{background:var(--bg2)}.btn:active{transform:scale(0.97)}
-.btn.p{background:var(--accent);color:#fff;border-color:var(--accent)}.btn.p:hover{background:var(--accent2)}
-.btn.d{background:var(--danger);color:#fff;border-color:var(--danger)}
-.btn.s{padding:0.3rem 0.65rem;font-size:0.7rem}.btn:disabled{opacity:0.4;cursor:not-allowed}
-.inp,.sel{width:100%;padding:0.45rem 0.65rem;font-size:0.8rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);color:var(--fg);font-family:var(--font-body);transition:border-color 0.15s}
-.inp:focus,.sel:focus{outline:none;border-color:var(--accent)}
-.sel{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%238a8880' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.5rem center;padding-right:1.8rem}
-label{display:block;font-size:0.6rem;color:var(--fg3);margin-bottom:0.15rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:500}
-textarea{width:100%;padding:0.45rem 0.65rem;font-size:0.8rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);color:var(--fg);font-family:var(--font-body);resize:vertical;min-height:50px}
-textarea:focus{outline:none;border-color:var(--accent)}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:0.55rem}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.55rem}
-.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.45rem}
-@media(max-width:520px){.g3,.g4{grid-template-columns:1fr 1fr}}
-.mini-sc{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:0.9rem}
-.mh{width:33px;height:42px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;border:2px solid transparent;font-size:0.78rem;font-weight:500}
-.mh .n{font-size:0.52rem;opacity:0.7}.mh.a{border-color:var(--fg)!important}
-.sr{display:grid;grid-template-columns:22px 38px 50px 44px 38px 50px 40px 40px 38px;gap:2px;align-items:center;font-size:0.65rem;padding:0.22rem 0;border-bottom:0.5px solid var(--border)}
-.sr.hd{font-weight:500;color:var(--fg3);font-size:0.52rem;text-transform:uppercase;letter-spacing:0.03em;border-bottom:1px solid var(--border)}
-.sn{width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg2);font-size:0.58rem;font-weight:600}
-.sb{display:inline-block;padding:0.06rem 0.3rem;border-radius:3px;font-size:0.55rem;font-weight:500}
-.ic{border-left:3px solid var(--warn);border-radius:0 var(--radius-lg) var(--radius-lg) 0}
-.ic.high{border-left-color:var(--danger)}.ic.positive{border-left-color:var(--positive)}
-.ip{font-size:0.54rem;font-weight:600;padding:0.08rem 0.38rem;border-radius:3px;text-transform:uppercase;letter-spacing:0.04em}
-.sct{width:100%;border-collapse:collapse;font-size:0.66rem}
-.sct th,.sct td{padding:0.25rem 0.1rem;text-align:center}
-.sct th{color:var(--fg3);font-weight:400;font-size:0.55rem;text-transform:uppercase}
-.sct .rl{text-align:left;color:var(--fg3);padding-left:0.2rem;width:36px}
-.sp{display:inline-block;padding:0.06rem 0.22rem;border-radius:3px;font-weight:600;min-width:17px;font-size:0.62rem}
-.hg{display:grid;grid-template-columns:38px 54px 66px 50px;gap:3px 6px;font-size:0.74rem;align-items:center}
-.hg .hdr{font-size:0.54rem;text-transform:uppercase;color:var(--fg3);font-weight:500}
-.hg input,.hg select{padding:0.22rem 0.3rem;font-size:0.74rem;border-radius:5px;border:1px solid var(--border);background:var(--card);color:var(--fg);font-family:var(--font-body)}
-.td{grid-column:1/-1;height:1.5px;background:var(--border);margin:0.2rem 0}
-.ct{font-size:0.6rem;padding:0.12rem 0.4rem;border-radius:3px;background:var(--bg2);color:var(--fg2)}
-.dm{display:flex;gap:0.45rem;flex-wrap:wrap;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
-.hr{display:grid;grid-template-columns:minmax(0,1fr) 54px 38px 38px 38px;gap:4px;font-size:0.7rem;align-items:center;padding:0.4rem 0}
-.hr+.hr{border-top:0.5px solid var(--border)}
-.cdt{width:100%;border-collapse:collapse;font-size:0.71rem}
-.cdt th,.cdt td{padding:0.32rem 0.4rem;text-align:center;border-bottom:0.5px solid var(--border)}
-.cdt th{color:var(--fg3);font-weight:500;font-size:0.58rem;text-transform:uppercase}.cdt td:first-child{text-align:left;font-weight:500}
-.fi{animation:fi 0.3s ease}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:0.55rem 1.1rem;border-radius:var(--radius);font-size:0.78rem;font-weight:500;z-index:1000;animation:ti 0.3s ease,to 0.3s ease 2.2s forwards}
-@keyframes ti{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-@keyframes to{to{opacity:0;transform:translateX(-50%) translateY(10px)}}
-#fi{display:none}
-/* Score gauge */
-.gauge{position:relative;width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column}
-.gauge-val{font-size:1.2rem;font-weight:600;font-family:var(--font-display)}
-.gauge-label{font-size:0.52rem;color:var(--fg3);text-transform:uppercase;letter-spacing:0.04em}
-.score-bar{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden;margin-top:0.3rem}
-.score-fill{height:100%;border-radius:3px;transition:width 0.5s ease}
-.score-section{display:flex;align-items:center;gap:1rem;padding:0.7rem 0}
-.score-section+.score-section{border-top:0.5px solid var(--border)}
-.score-info{flex:1;min-width:0}
-.score-club-name{font-weight:500;font-size:0.82rem}
-.score-club-detail{font-size:0.68rem;color:var(--fg3);margin-top:0.1rem}
-.score-value{font-size:1.4rem;font-weight:600;font-family:var(--font-display);min-width:48px;text-align:right}
-.cat-card{text-align:center;padding:1rem 0.6rem}
-.cat-score{font-size:2rem;font-weight:600;font-family:var(--font-display)}
-.cat-label{font-size:0.62rem;color:var(--fg3);text-transform:uppercase;letter-spacing:0.06em;margin-top:0.15rem}
-.cat-bar{height:5px;border-radius:3px;background:var(--bg3);overflow:hidden;margin-top:0.4rem}
-.cat-fill{height:100%;border-radius:3px}
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --turf:#0f3d2e;        /* deep fairway green */
+    --turf-2:#16513c;
+    --flag:#d94f2a;        /* flagstick orange-red */
+    --cream:#f3efe4;       /* scorecard paper */
+    --paper:#fbf9f2;
+    --ink:#15201a;
+    --line:#cdc6b2;
+    --good:#1f7a4d;
+    --bad:#c0392b;
+    --mute:#6f6a5c;
+    --gold:#caa14a;
+    --shadow:0 1px 0 rgba(0,0,0,.04), 0 8px 24px -12px rgba(15,61,46,.25);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--turf);color:var(--ink);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  body{padding:0;min-height:100vh}
+
+  /* ---- Masthead ---- */
+  header.top{
+    background:
+      radial-gradient(120% 140% at 85% -20%, rgba(217,79,42,.18), transparent 55%),
+      linear-gradient(180deg,var(--turf),var(--turf-2));
+    color:var(--cream);padding:28px 22px 30px;position:relative;overflow:hidden;
+  }
+  header.top::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
+    background:repeating-linear-gradient(90deg,var(--cream) 0 18px,transparent 18px 30px);opacity:.5;
+  }
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);font-weight:600}
+  .nav{display:flex;align-items:center;gap:16px;padding:0 0 18px;font-family:'IBM Plex Mono',monospace;font-size:12px}
+  .nav-here{color:var(--cream);font-weight:600;letter-spacing:.04em;border-bottom:2px solid var(--flag);padding-bottom:3px}
+  .nav-link{color:rgba(243,239,228,.72);text-decoration:none;letter-spacing:.04em;transition:.15s}
+  .nav-link:hover{color:var(--cream)}
+  h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(34px,7vw,58px);line-height:.92;letter-spacing:-.02em;margin:8px 0 6px}
+  h1 .num{color:var(--flag);position:relative}
+  .sub{font-size:14px;color:rgba(243,239,228,.74);max-width:46ch}
+
+  .wrap{max-width:980px;margin:0 auto;padding:22px 16px 80px}
+
+  /* ---- Round meta bar ---- */
+  .metabar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow);margin-top:-18px;position:relative;z-index:2}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+  .field input{font-family:'Inter';font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%}
+  .field.course{flex:1 1 200px}
+  .field.short{width:96px}
+  .field.par{width:78px}
+  .field.golfer{flex:1 1 140px}
+  .field input:focus{outline:2px solid var(--turf);outline-offset:1px}
+
+  /* ---- Scorecard table ---- */
+  section.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;margin-top:16px;box-shadow:var(--shadow);overflow:hidden}
+  .card h2{font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;padding:16px 16px 4px}
+  .card .hint{padding:0 16px 12px;font-size:12.5px;color:var(--mute)}
+
+  .scroll{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:680px}
+  thead th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);font-weight:600;padding:10px 6px;border-bottom:2px solid var(--line);text-align:center;white-space:nowrap}
+  thead th.rowlbl{text-align:left;padding-left:16px}
+  tbody td{padding:5px 6px;text-align:center;border-bottom:1px solid #e7e1cf}
+  tbody td.rowlbl{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute);text-align:left;padding-left:16px;white-space:nowrap;background:#f6f2e6}
+  tbody tr.out td,tbody tr.totals td{background:#efe9d8;font-weight:600}
+  td input{width:40px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:14px;padding:6px 2px;border:1px solid transparent;border-radius:6px;background:#fff;color:var(--ink)}
+  td input:hover{border-color:var(--line)}
+  td input:focus{outline:none;border-color:var(--turf);box-shadow:0 0 0 2px rgba(15,61,46,.15)}
+  .fwbtn{width:24px;height:26px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;font-size:12px;line-height:1;color:var(--mute);font-family:'IBM Plex Mono',monospace;transition:.12s}
+  .gir-dot{font-size:13px}
+  .calc{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--turf)}
+  .totline td{border-top:2px solid var(--line)}
+
+  /* ---- Goals dashboard ---- */
+  .goals-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:18px 16px 2px}
+  .goals-head h2{padding:0}
+  .scorepill{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--mute)}
+  .goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;padding:14px 16px 20px}
+  .goal{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff;position:relative;overflow:hidden}
+  .goal .lab{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+  .goal .val{font-family:'Bricolage Grotesque';font-weight:800;font-size:30px;line-height:1;margin:8px 0 2px}
+  .goal .target{font-size:11.5px;color:var(--mute)}
+  .goal .scr{margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;color:var(--gold);border-top:1px dashed var(--line);padding-top:7px}
+  .goal .bar{height:6px;border-radius:4px;background:#eae4d3;margin-top:10px;overflow:hidden}
+  .goal .bar > i{display:block;height:100%;border-radius:4px;transition:width .4s ease}
+  .goal.met{border-color:rgba(31,122,77,.5);box-shadow:inset 0 0 0 1px rgba(31,122,77,.18)}
+  .goal.met .val{color:var(--good)}
+  .goal.met .bar > i{background:var(--good)}
+  .goal.miss .val{color:var(--bad)}
+  .goal.miss .bar > i{background:var(--flag)}
+  .goal .tag{position:absolute;top:12px;right:12px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;padding:3px 7px;border-radius:20px;text-transform:uppercase;font-weight:600}
+  .goal.met .tag{background:rgba(31,122,77,.12);color:var(--good)}
+  .goal.miss .tag{background:rgba(192,57,43,.1);color:var(--bad)}
+
+  .verdict{margin:0 16px 18px;padding:14px 16px;border-radius:12px;background:linear-gradient(180deg,#14513c,#0f3d2e);color:var(--cream);font-size:13.5px;line-height:1.5}
+  .verdict b{color:var(--gold)}
+
+  .hcp{margin:0 16px 18px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  .hcp .head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:14px 16px;background:linear-gradient(180deg,#fbf9f2,#f3efe4);border-bottom:1px solid var(--line)}
+  .hcp .head .big{font-family:'Bricolage Grotesque';font-weight:800;font-size:38px;line-height:1;color:var(--turf)}
+  .hcp .head .lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+  .hcp .head .note{font-size:12px;color:var(--mute);margin-left:auto;max-width:34ch;text-align:right}
+  .hcp .head .chk{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600}
+  .hcp .head .chk.hit{background:rgba(31,122,77,.12);color:var(--good)}
+  .hcp .head .chk.away{background:rgba(202,161,74,.16);color:#7a5e15}
+  .hcp .rows{padding:6px 16px 14px}
+  .hcp .mrow{display:grid;grid-template-columns:118px 1fr 78px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid #efe9d8}
+  .hcp .mrow:last-child{border-bottom:none}
+  .hcp .mname{font-size:12.5px;color:var(--ink)}
+  .hcp .mname small{display:block;color:var(--mute);font-family:'IBM Plex Mono',monospace;font-size:10px}
+  .hcp .track{position:relative;height:26px}
+  .hcp .scale{position:absolute;inset:0;display:flex}
+  .hcp .scale span{flex:1;border-right:1px dashed #e0d9c4;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#b8b09a;padding-left:3px;line-height:26px}
+  .hcp .scale span:last-child{border-right:none}
+  .hcp .pin{position:absolute;top:2px;width:0;height:22px}
+  .hcp .pin::before{content:"";position:absolute;left:-5px;top:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--flag)}
+  .hcp .pin::after{content:"";position:absolute;left:-1px;top:5px;width:2px;height:17px;background:var(--flag)}
+  .hcp .mval{font-family:'IBM Plex Mono',monospace;font-size:12px;text-align:right;color:var(--turf);font-weight:600}
+  .hcp .mval small{color:var(--mute);font-weight:400}
+
+  /* ---- Actions ---- */
+  .actions{display:flex;gap:10px;flex-wrap:wrap;padding:0 16px 20px}
+  button.act{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:11px 16px;border-radius:10px;border:1px solid var(--turf);background:var(--turf);color:var(--cream);cursor:pointer;font-weight:600;transition:.15s}
+  button.act:hover{background:var(--turf-2)}
+  button.act.ghost{background:transparent;color:var(--turf)}
+  button.act.ghost:hover{background:rgba(15,61,46,.06)}
+  button.act.danger{border-color:var(--bad);color:var(--bad);background:transparent}
+  button.act.danger:hover{background:rgba(192,57,43,.08)}
+
+  /* ---- Saved rounds ---- */
+  .history{margin-top:16px}
+  .hist-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 16px 2px}
+  .hist-head h2{padding:0}
+  .filter{display:flex;align-items:center;gap:8px}
+  .filter label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+  .filter select{font-family:'Inter';font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+  .filter select:focus{outline:2px solid var(--turf);outline-offset:1px}
+  .rnd .golfer-pill{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:#7a5e15;background:rgba(202,161,74,.16);padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+  .rnd{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #e7e1cf;font-size:13px}
+  .rnd:last-child{border-bottom:none}
+  .rnd .when{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute);width:84px;flex-shrink:0}
+  .rnd .cn{flex:1;font-weight:600}
+  .rnd .sc{font-family:'Bricolage Grotesque';font-weight:800;font-size:18px}
+  .rnd .mini{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--mute)}
+  .rnd .hbadge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--turf);background:rgba(15,61,46,.08);border:1px solid rgba(15,61,46,.2);padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+  .rnd .dot5{display:flex;gap:3px}
+  .rnd .dot5 span{width:9px;height:9px;border-radius:50%;background:#ddd6c2}
+  .rnd .dot5 span.y{background:var(--good)}
+  .empty{padding:24px 16px;color:var(--mute);font-size:13px;text-align:center}
+  .trend{padding:14px 16px 4px;font-size:12px;color:var(--mute)}
+  @media (max-width:560px){
+    .field.course{flex:1 1 100%}
+    .goal .val{font-size:26px}
+  }
 </style>
 </head>
 <body>
-<div class="app" id="app"></div>
-<input type="file" id="fi" accept=".json,.csv">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<header class="top">
+  <div class="wrap" style="padding-bottom:0;padding-top:0">
+    <nav class="nav">
+      <span class="nav-here">Round Tracker</span>
+      <a class="nav-link" href="individual_goals.html">Individual Goals →</a>
+    </nav>
+    <div class="eyebrow">Round Tracker · Handicap Project</div>
+    <h1>The Path to <span class="num">0</span></h1>
+    <p class="sub">Scratch is the destination — and you get there one benchmark at a time. Each round, push your handicap toward the next lower tier; string those together and the ultimate goal of 0 takes care of itself. Log every hole, grade the round against the metrics that move the needle, and see what handicap each round actually played to.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- Round meta -->
+  <div class="metabar">
+    <div class="field course"><label>Course</label><input id="m-course" placeholder="e.g. Turlock Golf & Country Club"></div>
+    <div class="field short"><label>Tees</label><input id="m-tees" placeholder="Blue"></div>
+    <div class="field short"><label>Date</label><input id="m-date" type="date"></div>
+    <div class="field golfer"><label>Golfer</label><input id="m-golfer" placeholder="Name" list="golfer-names"><datalist id="golfer-names"></datalist></div>
+  </div>
+
+  <!-- Scorecard -->
+  <section class="card">
+    <h2>Hole-by-hole</h2>
+    <p class="hint">Enter <b>Par</b>, <b>Score</b>, and <b>Putts</b> for each hole. GIR is computed for you: green reached in (par − 2) strokes or fewer. In the <b>≤6ft</b> rows, log putts made and putts attempted from inside six feet — the true scratch separator.</p>
+    <div class="scroll">
+      <table id="cardtbl"><thead></thead><tbody></tbody></table>
+    </div>
+  </section>
+
+  <!-- Goals dashboard -->
+  <section class="card">
+    <div class="goals-head">
+      <h2>The metrics that matter</h2>
+      <div class="scorepill" id="scorepill">— strokes · — to par</div>
+    </div>
+    <div class="goals" id="goals"></div>
+    <div class="verdict" id="verdict">Start entering scores and your round verdict appears here.</div>
+    <div class="hcp" id="hcp"></div>
+    <div class="actions">
+      <button class="act" id="saveBtn">Save round</button>
+      <button class="act ghost" id="newBtn">New round</button>
+      <button class="act danger" id="clearBtn">Clear card</button>
+    </div>
+  </section>
+
+  <!-- History -->
+  <section class="card history">
+    <div class="hist-head">
+      <h2>Saved rounds</h2>
+      <div class="filter"><label for="filter-golfer">Golfer</label>
+        <select id="filter-golfer"><option value="">All golfers</option></select>
+      </div>
+    </div>
+    <div class="trend" id="trend"></div>
+    <div id="historyList"><div class="empty">No rounds saved yet. Your progress toward the goals will trend here.</div></div>
+  </section>
+</div>
+
 <script>
+const HOLES = 18;
+const GOAL    = { gir:50,   putts:31.5, scramble:40, threeP:1,   dbl:0,   p6:70 };
+const SCRATCH = { gir:57,   putts:31.3, scramble:50, threeP:1,   dbl:0.5, p6:76 };
 
-// ═══════════════════════════════════════════════
-//  FAIRWAY IQ v3 — Shot-Level Scoring Engine
-// ═══════════════════════════════════════════════
+// Per-handicap benchmark averages (Break X Golf study; 4/8/16 interpolated from 5/10/15/20).
+// Each metric maps a stat value -> the handicap tier it most resembles.
+// tiers: 0,4,8,12,16,20
+const TIERS=[0,4,8,12,16,20];
+const BENCH={
+  gir:      [56.8, 48.4, 39.7, 32.0, 24.8, 22.4],  // GIR %
+  putts:    [31.3, 32.3, 33.5, 34.4, 35.3, 36.1],  // total putts
+  scramble: [50.0, 40.0, 33.0, 28.0, 24.0, 21.7],  // up&down %
+  threeP:   [1.3,  1.9,  2.4,  2.9,  3.4,  3.8 ],   // three-putts/round
+  dbl:      [0.6,  1.6,  2.8,  4.2,  5.6,  7.0 ],   // doubles+/round
+  p6:       [76,   71,   67,   64,   61,   58  ],   // % made inside 6ft
+};
+// which direction is "better" — true = higher is better
+const HIGHER={gir:true,putts:false,scramble:true,threeP:false,dbl:false,p6:true};
+const METRIC_LABELS={gir:'GIR %',putts:'Total putts',scramble:'Scrambling %',threeP:'Three-putts',dbl:'Doubles or worse',p6:'Putts made ≤6 ft'};
 
-const CLUBS=['Dr','3W','Hyb','3i','4i','5i','6i','7i','8i','9i','PW','W50','W56','W60','Putter'];
-const LIES=['Tee','Fairway','Rough','Fringe','Green','Bunker','Waste Area'];
-const END_LIES=['Fairway','Green','Fringe','Rough','Bunker','Waste Area','Penalty','Hazard'];
-const SHAPES=['Neutral','Fade','Draw','Hook','Slice','Straight','Push','Pull'];
-const GREENS_COND=['Firm','Medium','Soft'];
-const WEATHER_OPTS=['Clear','Windy','Light Rain','Heavy Rain','Fog','Excessive Heat','Cold','Overcast'];
-const TEES=['Championship','Blue','White','Gold','Red','Junior'];
-const DCLUBS=['Dr','3W','Hyb'];
-
-// ─── PGA TOUR BENCHMARKS ──────────────────
-const PGA_CARRY={Dr:282,'3W':249,Hyb:220,'3i':209,'4i':209,'5i':199,'6i':188,'7i':176,'8i':164,'9i':152,PW:142,W50:120,W56:100,W60:80};
-
-// PGA proximity to hole by distance range (yards -> feet)
-const PGA_PROX=[
-  {min:0,max:10,ft:3},{min:10,max:20,ft:5},{min:20,max:30,ft:7},{min:30,max:50,ft:12},
-  {min:50,max:75,ft:16.5},{min:75,max:100,ft:17.8},{min:100,max:125,ft:20.3},
-  {min:125,max:150,ft:23.7},{min:150,max:175,ft:28.8},{min:175,max:200,ft:35.8},
-  {min:200,max:250,ft:42},{min:250,max:999,ft:50}
-];
-
-// PGA putting make % by distance in feet
-const PGA_PUTT=[
-  {ft:2,pct:99},{ft:3,pct:96},{ft:4,pct:88},{ft:5,pct:77},{ft:6,pct:70},
-  {ft:7,pct:61},{ft:8,pct:55},{ft:10,pct:40},{ft:15,pct:23},{ft:20,pct:15},
-  {ft:25,pct:10},{ft:30,pct:7},{ft:40,pct:4},{ft:50,pct:3},{ft:60,pct:2}
-];
-
-function getPgaProx(yds){
-  for(const p of PGA_PROX)if(yds>=p.min&&yds<p.max)return p.ft;
-  return 50;
-}
-function getPgaPuttPct(ft){
-  if(ft<=2)return 99;
-  for(let i=0;i<PGA_PUTT.length-1;i++){
-    if(ft<=PGA_PUTT[i].ft)return PGA_PUTT[i].pct;
-    if(ft>PGA_PUTT[i].ft&&ft<=PGA_PUTT[i+1].ft){
-      const r=(ft-PGA_PUTT[i].ft)/(PGA_PUTT[i+1].ft-PGA_PUTT[i].ft);
-      return PGA_PUTT[i].pct+(PGA_PUTT[i+1].pct-PGA_PUTT[i].pct)*r;
-    }
-  }
-  return 2;
+// state: per-hole {par, score, putts, p6made, p6att}
+let holes = [];
+function blankHoles(){
+  const defPar=[4,4,3,5,4,4,3,4,5, 4,3,4,5,4,4,3,4,5]; // sensible default, editable
+  return Array.from({length:HOLES},(_,i)=>({par:defPar[i],score:'',putts:'',p6made:'',p6att:''}));
 }
 
-// ─── SHOT SCORING ENGINE (0-125) ──────────
-const MAX_SCORE=125;
-
-function scoreShot(shot){
-  if(shot.endLie==='Penalty'||shot.endLie==='Hazard')return{total:0,dist:0,lie:0,shape:0,acc:0,reason:'Penalty'};
-  if(shot.club==='Putter')return scorePutt(shot);
-
-  const carry=shot.clubDist||0;
-  const pgaCarry=PGA_CARRY[shot.club]||150;
-
-  // Distance score (40%): ratio of carry to PGA avg, scaled to 125
-  let distScore=0;
-  if(carry>0){
-    const ratio=carry/pgaCarry;
-    if(ratio>=1)distScore=MAX_SCORE; // meets or exceeds PGA = perfect 125
-    else if(ratio>=0.85)distScore=100+(ratio-0.85)/(1-0.85)*25; // 85-100% of PGA = 100-125
-    else if(ratio>=0.5)distScore=ratio/0.85*100; // 50-85% = scaled 0-100
-    else distScore=ratio*100*0.8; // below 50% = harsh penalty
-  }
-
-  // End lie score (25%)
-  const lieScores={Green:MAX_SCORE,Fairway:110,Fringe:85,Rough:50,'Waste Area':35,Bunker:30,Penalty:0,Hazard:0};
-  const lieScore=lieScores[shot.endLie]??60;
-
-  // Shape score (15%)
-  const shapeScores={Neutral:MAX_SCORE,Straight:MAX_SCORE,Fade:118,Draw:118,Push:60,Pull:60,Hook:25,Slice:25};
-  const shapeScore=shapeScores[shot.shape]??85;
-
-  // Accuracy score (20%): how close end distance is relative to PGA proximity
-  let accScore=60; // default if no data
-  const endDist=parseFloat(shot.endDistToHole);
-  const startDist=parseFloat(shot.distToHole);
-  if(!isNaN(endDist)&&!isNaN(startDist)&&startDist>0){
-    const pgaProxFt=getPgaProx(startDist);
-    const endDistFt=endDist*3; // convert yards to approx feet
-    if(endDistFt<=pgaProxFt*0.5)accScore=MAX_SCORE; // way better than PGA avg
-    else if(endDistFt<=pgaProxFt)accScore=100+(1-endDistFt/pgaProxFt)*50; // better than PGA = 100-125
-    else{
-      const ratio=pgaProxFt/endDistFt;
-      accScore=Math.max(ratio*100,5);
-    }
-  }else if(!isNaN(endDist)){
-    if(endDist<=1)accScore=MAX_SCORE;else if(endDist<=3)accScore=115;else if(endDist<=10)accScore=95;
-    else if(endDist<=20)accScore=70;else if(endDist<=40)accScore=45;else accScore=20;
-  }
-
-  const total=Math.round(distScore*0.4+lieScore*0.25+shapeScore*0.15+accScore*0.2);
-  return{total:Math.min(total,MAX_SCORE),dist:Math.round(distScore),lie:Math.round(lieScore),shape:Math.round(shapeScore),acc:Math.round(accScore)};
+function init(){
+  holes = blankHoles();
+  document.getElementById('m-date').value = new Date().toISOString().slice(0,10);
+  buildTable();
+  recompute();
+  loadHistory();
 }
 
-function scorePutt(shot){
-  const dist=parseFloat(shot.distToHole)||0;
-  const endDist=parseFloat(shot.endDistToHole)||0;
-  const distFt=dist*3; // yards to feet approx
-  const endFt=endDist*3;
+function buildTable(){
+  const head = document.querySelector('#cardtbl thead');
+  const body = document.querySelector('#cardtbl tbody');
+  // header: label + 9 + OUT + 9 + IN + TOT
+  let cols = ['Hole'];
+  for(let i=1;i<=9;i++) cols.push(i);
+  cols.push('OUT');
+  for(let i=10;i<=18;i++) cols.push(i);
+  cols.push('IN','TOT');
+  head.innerHTML = '<tr>'+cols.map((c,idx)=>`<th class="${idx===0?'rowlbl':''}">${c}</th>`).join('')+'</tr>';
 
-  const holed=endDist<=0.3;
-  const pgaMakePct=getPgaPuttPct(distFt);
-
-  if(holed){
-    // Making a hard putt scores higher — scale to 125
-    if(pgaMakePct>=90)return{total:100,dist:0,lie:0,shape:0,acc:100,reason:'Made putt (expected)'};
-    if(pgaMakePct>=60)return{total:110,dist:0,lie:0,shape:0,acc:110,reason:'Made putt (solid)'};
-    if(pgaMakePct>=30)return{total:118,dist:0,lie:0,shape:0,acc:118,reason:'Made putt (great)'};
-    return{total:MAX_SCORE,dist:0,lie:0,shape:0,acc:MAX_SCORE,reason:'Made putt (exceptional)'};
-  }
-
-  // Not holed: score based on leave distance
-  let score=60;
-  if(endFt<=3)score=95; // tap-in range
-  else if(endFt<=6)score=80; // good lag
-  else if(endFt<=10)score=60; // ok
-  else if(endFt<=20)score=35; // poor
-  else score=15; // very poor lag
-
-  // Adjust for initial distance: long lag putts leaving it close is better
-  if(distFt>30&&endFt<=3)score=Math.max(score,100);
-  if(distFt>30&&endFt<=6)score=Math.max(score,90);
-  if(distFt>50&&endFt<=10)score=Math.max(score,85);
-
-  return{total:Math.round(score),dist:0,lie:0,shape:0,acc:Math.round(score),reason:'Putt not holed'};
-}
-
-// Category scoring for a round
-function scoreRound(round){
-  const cats={driving:{shots:[],scores:[]},irons:{shots:[],scores:[]},shortGame:{shots:[],scores:[]},putting:{shots:[],scores:[]}};
-  const allScores=[];
-
-  (round.holes||[]).forEach(hole=>{
-    (hole.shots||[]).forEach((shot,idx)=>{
-      // Skip exempt shots from scoring
-      if(shot.exempt){allScores.push({total:null,dist:0,lie:0,shape:0,acc:0,shot,hole:hole.number,exempt:true});return}
-
-      const sc=scoreShot(shot);
-      allScores.push({...sc,shot,hole:hole.number});
-
-      if(shot.club==='Putter'){
-        cats.putting.shots.push(shot);cats.putting.scores.push(sc.total);
-      }else if(DCLUBS.includes(shot.club)&&(shot.lie==='Tee'||idx===0)){
-        cats.driving.shots.push(shot);cats.driving.scores.push(sc.total);
-      }else if(['3i','4i','5i','6i','7i','8i','9i'].includes(shot.club)){
-        cats.irons.shots.push(shot);cats.irons.scores.push(sc.total);
-      }else{
-        cats.shortGame.shots.push(shot);cats.shortGame.scores.push(sc.total);
-      }
-    });
+  const rows = ['Par','Score','Putts','GIR','≤6ft made','≤6ft tries'];
+  body.innerHTML = '';
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');
+    if(r==='Par') tr.className='';
+    let html = `<td class="rowlbl">${r}</td>`;
+    const seq=[...Array(9).keys()].map(i=>i),outMark=true;
+    // helper to render a hole cell
+    const cell=(h)=>renderCell(r,h);
+    for(let i=0;i<9;i++) html+=`<td>${cell(i)}</td>`;
+    html+=`<td class="calc" data-sum="${r}-out">·</td>`;
+    for(let i=9;i<18;i++) html+=`<td>${cell(i)}</td>`;
+    html+=`<td class="calc" data-sum="${r}-in">·</td>`;
+    html+=`<td class="calc" data-sum="${r}-tot">·</td>`;
+    tr.innerHTML=html;
+    body.appendChild(tr);
   });
+  body.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input',onInput);
+  });
+}
 
-  const avg=arr=>{const v=arr.filter(x=>x!==null);return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length):null};
-  return{
-    driving:{score:avg(cats.driving.scores),count:cats.driving.scores.length,shots:cats.driving.shots,scores:cats.driving.scores},
-    irons:{score:avg(cats.irons.scores),count:cats.irons.scores.length,shots:cats.irons.shots,scores:cats.irons.scores},
-    shortGame:{score:avg(cats.shortGame.scores),count:cats.shortGame.scores.length,shots:cats.shortGame.shots,scores:cats.shortGame.scores},
-    putting:{score:avg(cats.putting.scores),count:cats.putting.scores.length,shots:cats.putting.shots,scores:cats.putting.scores},
-    allScores,
-    overall:avg(allScores.filter(s=>!s.exempt).map(s=>s.total)),
+function renderCell(row,h){
+  const d=holes[h];
+  if(row==='Par') return `<input data-h="${h}" data-k="par" value="${d.par}" inputmode="numeric">`;
+  if(row==='Score') return `<input data-h="${h}" data-k="score" value="${d.score}" inputmode="numeric">`;
+  if(row==='Putts') return `<input data-h="${h}" data-k="putts" value="${d.putts}" inputmode="numeric">`;
+  if(row==='≤6ft made') return `<input data-h="${h}" data-k="p6made" value="${d.p6made}" inputmode="numeric">`;
+  if(row==='≤6ft tries') return `<input data-h="${h}" data-k="p6att" value="${d.p6att}" inputmode="numeric">`;
+  if(row==='GIR'){
+    const g=girStatus(d);
+    if(g===null) return `<span class="gir-dot" style="color:#c9c2ae">·</span>`;
+    return g ? `<span class="gir-dot" title="GIR" style="color:var(--good)">●</span>`
+             : `<span class="gir-dot" title="Missed GIR" style="color:var(--flag)">○</span>`;
+  }
+  return '';
+}
+
+function girStatus(d){
+  const par=Number(d.par), score=Number(d.score), putts=Number(d.putts);
+  if(!par||!score||d.putts==='') return null;
+  // strokes to reach green = score - putts ; GIR if <= par-2
+  const toGreen = score - putts;
+  return toGreen <= (par-2);
+}
+
+function onInput(e){
+  const h=+e.target.dataset.h, k=e.target.dataset.k;
+  let v=e.target.value.replace(/[^0-9]/g,'');
+  holes[h][k]=v===''?'':v;
+  refreshHoleVisual(h);
+  recompute();
+}
+
+function refreshHoleVisual(h){
+  // update GIR row for hole h without rebuilding whole table
+  const body=document.querySelector('#cardtbl tbody');
+  const rows=body.querySelectorAll('tr');
+  // row order: Par(0) Score(1) Putts(2) GIR(3) ≤6ft made(4) ≤6ft tries(5)
+  const colIndex = h<9 ? h+1 : h+2; // +1 for label, +1 more after OUT col
+  rows[3].children[colIndex].innerHTML=renderCell('GIR',h);
+}
+
+function stats(){
+  let score=0,putts=0,par=0,filled=0;
+  let girCount=0, girElig=0;
+  let scrSucc=0, scrOpp=0;
+  let threeP=0, dbl=0;
+  let p6made=0, p6att=0;
+  holes.forEach(d=>{
+    const p=Number(d.par),s=Number(d.score),pt=Number(d.putts);
+    if(p&&s){ par+=p; score+=s; filled++; }
+    if(d.putts!=='') putts+=pt;
+    const g=girStatus(d);
+    if(g!==null){ girElig++; if(g) girCount++; }
+    // scrambling: missed GIR -> opportunity; par or better -> success
+    if(g===false && s && p){ scrOpp++; if(s<=p) scrSucc++; }
+    if(d.putts!=='' && pt>=3) threeP++;
+    if(s&&p && (s-p)>=2) dbl++;
+    // putts inside 6ft
+    if(d.p6att!==''){ p6att+=Number(d.p6att); p6made+=Number(d.p6made||0); }
+  });
+  return {
+    score,putts,par,filled,
+    gir: girElig? (girCount/girElig*100):0, girCount, girElig,
+    scramble: scrOpp? (scrSucc/scrOpp*100):0, scrSucc, scrOpp,
+    threeP, dbl,
+    p6: p6att? (p6made/p6att*100):0, p6made, p6att,
+    toPar: score-par
   };
 }
 
-function scoreColor100(v){
-  if(v===null)return'var(--fg3)';
-  if(v>=105)return'var(--positive)';if(v>=85)return'var(--info)';
-  if(v>=60)return'var(--warn)';return'var(--danger)';
-}
-function scoreBarColor(v){
-  if(v>=105)return'#2d6a4f';if(v>=85)return'#1d4e89';if(v>=60)return'#b07d10';return'#c1121f';
-}
-function scoreBarWidth(v){return Math.min((v||0)/125*100,100)+'%'}
+function recompute(){
+  const s=stats();
+  // column sums
+  const sums=(key,from,to)=>{let t=0,any=false;for(let i=from;i<to;i++){const v=Number(holes[i][key]);if(holes[i][key]!==''&&!isNaN(v)){t+=v;any=true;}}return any?t:null;};
+  const map={Par:'par',Score:'score',Putts:'putts','≤6ft made':'p6made','≤6ft tries':'p6att'};
+  Object.entries(map).forEach(([row,key])=>{
+    const out=sums(key,0,9),inn=sums(key,9,18);
+    setSum(`${row}-out`,out); setSum(`${row}-in`,inn);
+    setSum(`${row}-tot`, (out||0)+(inn||0) || null);
+  });
+  // GIR tallies as x/y
+  const girOut=girTally(0,9),girIn=girTally(9,18);
+  setSumText('GIR-out',girOut); setSumText('GIR-in',girIn);
+  setSumText('GIR-tot', `${s.girCount}/${s.girElig}`);
 
-// ─── Storage ───────────────────────────
-const DB={
-  g(k){try{const v=localStorage.getItem('fiq_'+k);return v?JSON.parse(v):null}catch{return null}},
-  s(k,v){try{localStorage.setItem('fiq_'+k,JSON.stringify(v))}catch(e){console.error(e)}},
-  exp(){return JSON.stringify({version:4,exported:new Date().toISOString(),courses:DB.g('courses')||[],rounds:DB.g('rounds')||[],benchmarks:DB.g('benchmarks')||null},null,2)},
-  imp(json){
-    const d=JSON.parse(json);if(!d.courses||!d.rounds)throw new Error('Invalid format');
-    const ec=DB.g('courses')||[],er=DB.g('rounds')||[];
-    const ci=new Set(ec.map(c=>c.id)),ri=new Set(er.map(r=>r.id));
-    d.courses.forEach(c=>{if(!ci.has(c.id))ec.push(c)});
-    d.rounds.forEach(r=>{if(!ri.has(r.id))er.push(r)});
-    DB.s('courses',ec);DB.s('rounds',er);
-    if(d.benchmarks)DB.s('benchmarks',d.benchmarks);
-    return{courses:ec.length,rounds:er.length};
+  // scorepill
+  const toPar=s.toPar;
+  document.getElementById('scorepill').textContent =
+    s.filled? `${s.score} strokes · ${toPar>0?'+':''}${toPar} to par · ${s.filled}/18 holes` : '— strokes · — to par';
+
+  renderGoals(s);
+  renderVerdict(s);
+  renderHandicap(s);
+}
+
+function girTally(a,b){let c=0,e=0;for(let i=a;i<b;i++){const g=girStatus(holes[i]);if(g!==null){e++;if(g)c++;}}return e?`${c}/${e}`:'·';}
+function setSum(id,v){const el=document.querySelector(`[data-sum="${id}"]`);if(el)el.textContent=(v===null||v===0&&id.includes('Par')===false&&v===0)?(v===0?'0':'·'):(v===null?'·':v);}
+function setSumText(id,t){const el=document.querySelector(`[data-sum="${id}"]`);if(el)el.textContent=t;}
+
+function renderGoals(s){
+  const cards=[
+    {key:'gir',  lab:'GIR %',          val:s.gir.toFixed(0)+'%', sub:`${s.girCount}/${s.girElig} greens · goal ≥ 50%`, scr:'scratch 57%', met:s.gir>=GOAL.gir, pct:Math.min(100,s.gir/GOAL.gir*100), live:s.girElig>0},
+    {key:'putts',lab:'Total putts',    val:s.putts||'—',          sub:`goal ≤ 31.5`, scr:'scratch 31.3', met:s.putts<=GOAL.putts&&s.putts>0, pct:s.putts?Math.min(100,GOAL.putts/s.putts*100):0, live:s.putts>0},
+    {key:'scr',  lab:'Scrambling %',   val:s.scrOpp?s.scramble.toFixed(0)+'%':'—', sub:`${s.scrSucc}/${s.scrOpp} saves · goal ≥ 40%`, scr:'scratch 50%', met:s.scramble>=GOAL.scramble&&s.scrOpp>0, pct:Math.min(100,s.scramble/GOAL.scramble*100), live:s.scrOpp>0},
+    {key:'p6',   lab:'Putts made ≤6 ft', val:s.p6att?s.p6.toFixed(0)+'%':'—', sub:`${s.p6made}/${s.p6att} made · goal ≥ 70%`, scr:'scratch 76%', met:s.p6>=GOAL.p6&&s.p6att>0, pct:Math.min(100,s.p6/GOAL.p6*100), live:s.p6att>0},
+    {key:'3p',   lab:'Three-putts',    val:s.filled?s.threeP:'—',  sub:`goal ≤ 1`, scr:'scratch ~1', met:s.threeP<=GOAL.threeP, pct:s.threeP<=GOAL.threeP?100:0, live:s.filled>0, invert:true},
+    {key:'dbl',  lab:'Double+ bogeys', val:s.filled?s.dbl:'—',     sub:`goal = 0`, scr:'scratch ~0.5', met:s.dbl===0, pct:s.dbl===0?100:0, live:s.filled>0, invert:true},
+  ];
+  document.getElementById('goals').innerHTML = cards.map(c=>{
+    const cls = !c.live? '' : (c.met?'met':'miss');
+    const tag = !c.live? '' : (c.met?'<span class="tag">on track</span>':'<span class="tag">work zone</span>');
+    return `<div class="goal ${cls}">
+      ${tag}
+      <div class="lab">${c.lab}</div>
+      <div class="val">${c.val}</div>
+      <div class="target">${c.sub}</div>
+      <div class="bar"><i style="width:${c.live?c.pct:0}%"></i></div>
+      <div class="scr">${c.scr}</div>
+    </div>`;
+  }).join('');
+}
+
+// Map a single stat value to a continuous handicap position by interpolating the benchmark curve.
+function statToHcp(metric,val){
+  const b=BENCH[metric], higher=HIGHER[metric];
+  // Build arrays oriented so the stat is monotonic increasing with handicap.
+  // For "higher is better" stats, value decreases as handicap rises -> invert for search.
+  const xs=b.slice(), ts=TIERS.slice();
+  // We want: given val, find hcp. Walk segments between adjacent tiers.
+  for(let i=0;i<xs.length-1;i++){
+    const v0=xs[i], v1=xs[i+1], t0=ts[i], t1=ts[i+1];
+    const lo=Math.min(v0,v1), hi=Math.max(v0,v1);
+    if(val>=lo && val<=hi){
+      const frac=(v1===v0)?0:(val-v0)/(v1-v0);
+      return t0+frac*(t1-t0);
+    }
   }
-};
-
-// ─── Preloaded Courses ─────────────────
-const MICKE_GROVE={id:'c_micke_grove',name:'Micke Grove Golf Links',tees:'White',rating:69.2,slope:125,holes:[
-  {number:1,par:4,yards:364,handicap:3},{number:2,par:4,yards:345,handicap:7},
-  {number:3,par:4,yards:305,handicap:9},{number:4,par:3,yards:136,handicap:17},
-  {number:5,par:5,yards:456,handicap:1},{number:6,par:3,yards:163,handicap:13},
-  {number:7,par:5,yards:446,handicap:15},{number:8,par:4,yards:325,handicap:11},
-  {number:9,par:4,yards:396,handicap:5},
-  {number:10,par:4,yards:332,handicap:14},{number:11,par:5,yards:485,handicap:4},
-  {number:12,par:4,yards:335,handicap:12},{number:13,par:4,yards:301,handicap:18},
-  {number:14,par:3,yards:163,handicap:8},{number:15,par:5,yards:532,handicap:2},
-  {number:16,par:3,yards:203,handicap:16},{number:17,par:4,yards:345,handicap:10},
-  {number:18,par:4,yards:352,handicap:6}
-]};
-
-// Seed preloaded courses if first launch — see courses_data.js section below
-
-let S={
-  tab:'play',courses:DB.g('courses')||[],rounds:DB.g('rounds')||[],
-  editCourse:null,cf:mkC(),
-  aci:'c_micke_grove',rd:new Date().toISOString().split('T')[0],ch:1,hs:{},
-  cs:mkS(true),rc:{greens:'Medium',weather:[],notes:''},
-  sri:null,av:'single',showCond:false,
-  playerName:DB.g('lastPlayer')||'',playerHandicap:DB.g('lastHandicap')||'',
-  filterPlayer:'',
-};
-
-function mkC(){return{name:'',tees:'White',holes:Array.from({length:18},(_,i)=>({number:i+1,par:4,yards:350,handicap:i+1}))}}
-function mkS(tee){return{shotNumber:1,lie:tee?'Tee':'Fairway',distToHole:'',club:tee?'Dr':'7i',endLie:'Fairway',shape:'Neutral',endDistToHole:'',clubDist:null,exempt:false}}
-function sv(){DB.s('courses',S.courses);DB.s('rounds',S.rounds)}
-function getPlayers(){const names=new Set();S.rounds.forEach(r=>{if(r.player)names.add(r.player)});return[...names].sort()}
-function getFilteredRounds(){if(!S.filterPlayer)return S.rounds;return S.rounds.filter(r=>r.player===S.filterPlayer)}
-
-// ─── Preloaded Courses ─────────────────
-const PRELOADED_COURSES=[
-// MICKE GROVE - White (already exists, keep as is)
-
-// MICKE GROVE - Blue
-{id:'c_micke_grove_blue',name:'Micke Grove Golf Links',tees:'Blue',rating:72.3,slope:126,holes:[
-{number:1,par:4,yards:399,handicap:3},{number:2,par:4,yards:378,handicap:7},{number:3,par:4,yards:335,handicap:9},{number:4,par:3,yards:149,handicap:17},
-{number:5,par:5,yards:500,handicap:1},{number:6,par:3,yards:179,handicap:13},{number:7,par:5,yards:489,handicap:15},{number:8,par:4,yards:356,handicap:11},
-{number:9,par:4,yards:434,handicap:5},{number:10,par:4,yards:364,handicap:14},{number:11,par:5,yards:532,handicap:4},{number:12,par:4,yards:367,handicap:12},
-{number:13,par:4,yards:330,handicap:18},{number:14,par:3,yards:179,handicap:8},{number:15,par:5,yards:584,handicap:2},{number:16,par:3,yards:223,handicap:16},
-{number:17,par:4,yards:378,handicap:10},{number:18,par:4,yards:389,handicap:6}]},
-
-// SPANOS PARK - White (6070)
-{id:'c_spanos_white',name:'Reserve at Spanos Park',tees:'White',rating:69.3,slope:127,holes:[
-{number:1,par:4,yards:303,handicap:15},{number:2,par:5,yards:475,handicap:1},{number:3,par:4,yards:373,handicap:5},{number:4,par:3,yards:156,handicap:17},
-{number:5,par:4,yards:354,handicap:7},{number:6,par:5,yards:463,handicap:9},{number:7,par:4,yards:378,handicap:3},{number:8,par:3,yards:174,handicap:13},
-{number:9,par:4,yards:352,handicap:11},{number:10,par:4,yards:337,handicap:12},{number:11,par:5,yards:445,handicap:4},{number:12,par:4,yards:371,handicap:8},
-{number:13,par:3,yards:142,handicap:16},{number:14,par:4,yards:395,handicap:6},{number:15,par:3,yards:153,handicap:18},{number:16,par:5,yards:459,handicap:10},
-{number:17,par:4,yards:372,handicap:2},{number:18,par:4,yards:368,handicap:14}]},
-
-// SPANOS PARK - Blue (6550)
-{id:'c_spanos_blue',name:'Reserve at Spanos Park',tees:'Blue',rating:71.7,slope:129,holes:[
-{number:1,par:4,yards:327,handicap:15},{number:2,par:5,yards:512,handicap:1},{number:3,par:4,yards:402,handicap:5},{number:4,par:3,yards:168,handicap:17},
-{number:5,par:4,yards:382,handicap:7},{number:6,par:5,yards:499,handicap:9},{number:7,par:4,yards:408,handicap:3},{number:8,par:3,yards:188,handicap:13},
-{number:9,par:4,yards:379,handicap:11},{number:10,par:4,yards:363,handicap:12},{number:11,par:5,yards:480,handicap:4},{number:12,par:4,yards:400,handicap:8},
-{number:13,par:3,yards:153,handicap:16},{number:14,par:4,yards:425,handicap:6},{number:15,par:3,yards:165,handicap:18},{number:16,par:5,yards:495,handicap:10},
-{number:17,par:4,yards:401,handicap:2},{number:18,par:4,yards:403,handicap:14}]},
-
-// TURLOCK GOLF & CC - Blue (estimated ~6400, par 72)
-{id:'c_turlock_blue',name:'Turlock Golf & Country Club',tees:'Blue',rating:71.0,slope:126,holes:[
-{number:1,par:4,yards:385,handicap:7},{number:2,par:4,yards:410,handicap:1},{number:3,par:3,yards:175,handicap:15},{number:4,par:5,yards:520,handicap:5},
-{number:5,par:4,yards:370,handicap:9},{number:6,par:4,yards:340,handicap:13},{number:7,par:3,yards:165,handicap:17},{number:8,par:5,yards:505,handicap:3},
-{number:9,par:4,yards:395,handicap:11},{number:10,par:4,yards:380,handicap:8},{number:11,par:5,yards:490,handicap:4},{number:12,par:3,yards:155,handicap:16},
-{number:13,par:4,yards:365,handicap:10},{number:14,par:4,yards:400,handicap:2},{number:15,par:4,yards:350,handicap:12},{number:16,par:3,yards:185,handicap:18},
-{number:17,par:5,yards:480,handicap:6},{number:18,par:4,yards:370,handicap:14}]},
-
-// CREEKSIDE - Blue (6610)
-{id:'c_creekside_blue',name:'Creekside Golf Course',tees:'Blue',rating:71.2,slope:117,holes:[
-{number:1,par:4,yards:388,handicap:5},{number:2,par:4,yards:346,handicap:13},{number:3,par:5,yards:530,handicap:1},{number:4,par:3,yards:175,handicap:15},
-{number:5,par:4,yards:405,handicap:3},{number:6,par:4,yards:355,handicap:11},{number:7,par:3,yards:168,handicap:17},{number:8,par:5,yards:515,handicap:7},
-{number:9,par:4,yards:410,handicap:9},{number:10,par:4,yards:370,handicap:6},{number:11,par:3,yards:160,handicap:16},{number:12,par:5,yards:525,handicap:2},
-{number:13,par:4,yards:380,handicap:10},{number:14,par:4,yards:345,handicap:14},{number:15,par:3,yards:185,handicap:18},{number:16,par:4,yards:415,handicap:4},
-{number:17,par:5,yards:510,handicap:8},{number:18,par:4,yards:428,handicap:12}]},
-
-// CREEKSIDE - White (6021)
-{id:'c_creekside_white',name:'Creekside Golf Course',tees:'White',rating:68.8,slope:113,holes:[
-{number:1,par:4,yards:354,handicap:5},{number:2,par:4,yards:315,handicap:13},{number:3,par:5,yards:483,handicap:1},{number:4,par:3,yards:159,handicap:15},
-{number:5,par:4,yards:369,handicap:3},{number:6,par:4,yards:324,handicap:11},{number:7,par:3,yards:153,handicap:17},{number:8,par:5,yards:470,handicap:7},
-{number:9,par:4,yards:374,handicap:9},{number:10,par:4,yards:337,handicap:6},{number:11,par:3,yards:146,handicap:16},{number:12,par:5,yards:479,handicap:2},
-{number:13,par:4,yards:346,handicap:10},{number:14,par:4,yards:314,handicap:14},{number:15,par:3,yards:169,handicap:18},{number:16,par:4,yards:378,handicap:4},
-{number:17,par:5,yards:465,handicap:8},{number:18,par:4,yards:386,handicap:12}]},
-
-// DRYDEN PARK - Blue (6574)
-{id:'c_dryden_blue',name:'Dryden Park Golf Course',tees:'Blue',rating:69.3,slope:119,holes:[
-{number:1,par:4,yards:368,handicap:9},{number:2,par:5,yards:498,handicap:3},{number:3,par:4,yards:385,handicap:5},{number:4,par:3,yards:170,handicap:17},
-{number:5,par:4,yards:395,handicap:1},{number:6,par:4,yards:350,handicap:11},{number:7,par:3,yards:155,handicap:15},{number:8,par:5,yards:510,handicap:7},
-{number:9,par:4,yards:405,handicap:13},{number:10,par:4,yards:375,handicap:8},{number:11,par:4,yards:345,handicap:14},{number:12,par:3,yards:165,handicap:16},
-{number:13,par:5,yards:485,handicap:4},{number:14,par:4,yards:380,handicap:2},{number:15,par:4,yards:360,handicap:10},{number:16,par:3,yards:180,handicap:18},
-{number:17,par:5,yards:520,handicap:6},{number:18,par:4,yards:428,handicap:12}]},
-
-// DRYDEN PARK - White (~6100)
-{id:'c_dryden_white',name:'Dryden Park Golf Course',tees:'White',rating:67.5,slope:115,holes:[
-{number:1,par:4,yards:342,handicap:9},{number:2,par:5,yards:462,handicap:3},{number:3,par:4,yards:358,handicap:5},{number:4,par:3,yards:158,handicap:17},
-{number:5,par:4,yards:367,handicap:1},{number:6,par:4,yards:325,handicap:11},{number:7,par:3,yards:144,handicap:15},{number:8,par:5,yards:474,handicap:7},
-{number:9,par:4,yards:376,handicap:13},{number:10,par:4,yards:348,handicap:8},{number:11,par:4,yards:320,handicap:14},{number:12,par:3,yards:153,handicap:16},
-{number:13,par:5,yards:450,handicap:4},{number:14,par:4,yards:353,handicap:2},{number:15,par:4,yards:335,handicap:10},{number:16,par:3,yards:167,handicap:18},
-{number:17,par:5,yards:483,handicap:6},{number:18,par:4,yards:385,handicap:12}]},
-
-// POPPY HILLS - White (~6300, par 71)
-{id:'c_poppy_white',name:'Poppy Hills Golf Course',tees:'White',rating:71.5,slope:135,holes:[
-{number:1,par:4,yards:370,handicap:7},{number:2,par:5,yards:490,handicap:3},{number:3,par:4,yards:345,handicap:13},{number:4,par:4,yards:378,handicap:1},
-{number:5,par:3,yards:155,handicap:15},{number:6,par:4,yards:390,handicap:5},{number:7,par:4,yards:355,handicap:11},{number:8,par:3,yards:175,handicap:17},
-{number:9,par:4,yards:390,handicap:9},{number:10,par:5,yards:468,handicap:6},{number:11,par:3,yards:143,handicap:16},{number:12,par:4,yards:399,handicap:4},
-{number:13,par:4,yards:355,handicap:12},{number:14,par:4,yards:342,handicap:10},{number:15,par:3,yards:197,handicap:14},{number:16,par:4,yards:396,handicap:2},
-{number:17,par:3,yards:174,handicap:18},{number:18,par:5,yards:457,handicap:8}]},
-
-// POPPY HILLS - Blue (~6700, par 71)
-{id:'c_poppy_blue',name:'Poppy Hills Golf Course',tees:'Blue',rating:73.2,slope:140,holes:[
-{number:1,par:4,yards:394,handicap:7},{number:2,par:5,yards:521,handicap:3},{number:3,par:4,yards:367,handicap:13},{number:4,par:4,yards:402,handicap:1},
-{number:5,par:3,yards:165,handicap:15},{number:6,par:4,yards:415,handicap:5},{number:7,par:4,yards:378,handicap:11},{number:8,par:3,yards:186,handicap:17},
-{number:9,par:4,yards:415,handicap:9},{number:10,par:5,yards:498,handicap:6},{number:11,par:3,yards:152,handicap:16},{number:12,par:4,yards:424,handicap:4},
-{number:13,par:4,yards:378,handicap:12},{number:14,par:4,yards:364,handicap:10},{number:15,par:3,yards:210,handicap:14},{number:16,par:4,yards:421,handicap:2},
-{number:17,par:3,yards:185,handicap:18},{number:18,par:5,yards:486,handicap:8}]},
-
-// BAYONET - White (~6200, par 72)
-{id:'c_bayonet_white',name:'Bayonet Golf Course',tees:'White',rating:70.2,slope:131,holes:[
-{number:1,par:4,yards:348,handicap:11},{number:2,par:4,yards:370,handicap:3},{number:3,par:5,yards:475,handicap:13},{number:4,par:3,yards:155,handicap:17},
-{number:5,par:4,yards:380,handicap:5},{number:6,par:4,yards:340,handicap:9},{number:7,par:3,yards:175,handicap:15},{number:8,par:4,yards:365,handicap:1},
-{number:9,par:5,yards:470,handicap:7},{number:10,par:4,yards:330,handicap:12},{number:11,par:3,yards:185,handicap:16},{number:12,par:4,yards:375,handicap:4},
-{number:13,par:5,yards:490,handicap:8},{number:14,par:3,yards:165,handicap:18},{number:15,par:4,yards:395,handicap:2},{number:16,par:4,yards:360,handicap:10},
-{number:17,par:4,yards:345,handicap:6},{number:18,par:5,yards:480,handicap:14}]},
-
-// BAYONET - Blue (~6600, par 72)
-{id:'c_bayonet_blue',name:'Bayonet Golf Course',tees:'Blue',rating:72.5,slope:136,holes:[
-{number:1,par:4,yards:377,handicap:11},{number:2,par:4,yards:400,handicap:3},{number:3,par:5,yards:515,handicap:13},{number:4,par:3,yards:168,handicap:17},
-{number:5,par:4,yards:412,handicap:5},{number:6,par:4,yards:368,handicap:9},{number:7,par:3,yards:190,handicap:15},{number:8,par:4,yards:395,handicap:1},
-{number:9,par:5,yards:510,handicap:7},{number:10,par:4,yards:358,handicap:12},{number:11,par:3,yards:200,handicap:16},{number:12,par:4,yards:406,handicap:4},
-{number:13,par:5,yards:532,handicap:8},{number:14,par:3,yards:179,handicap:18},{number:15,par:4,yards:428,handicap:2},{number:16,par:4,yards:390,handicap:10},
-{number:17,par:4,yards:374,handicap:6},{number:18,par:5,yards:520,handicap:14}]},
-
-// BLACK HORSE - White (5915)
-{id:'c_blackhorse_white',name:'Black Horse Golf Course',tees:'White',rating:69.4,slope:125,holes:[
-{number:1,par:4,yards:340,handicap:9},{number:2,par:3,yards:150,handicap:17},{number:3,par:4,yards:310,handicap:13},{number:4,par:3,yards:155,handicap:15},
-{number:5,par:5,yards:475,handicap:3},{number:6,par:4,yards:365,handicap:1},{number:7,par:4,yards:330,handicap:11},{number:8,par:4,yards:345,handicap:5},
-{number:9,par:5,yards:460,handicap:7},{number:10,par:4,yards:335,handicap:10},{number:11,par:4,yards:355,handicap:4},{number:12,par:3,yards:165,handicap:18},
-{number:13,par:5,yards:480,handicap:6},{number:14,par:4,yards:280,handicap:16},{number:15,par:3,yards:175,handicap:14},{number:16,par:5,yards:490,handicap:8},
-{number:17,par:4,yards:350,handicap:2},{number:18,par:4,yards:355,handicap:12}]},
-
-// BLACK HORSE - Blue (6542)
-{id:'c_blackhorse_blue',name:'Black Horse Golf Course',tees:'Blue',rating:71.6,slope:132,holes:[
-{number:1,par:4,yards:376,handicap:9},{number:2,par:3,yards:166,handicap:17},{number:3,par:4,yards:343,handicap:13},{number:4,par:3,yards:171,handicap:15},
-{number:5,par:5,yards:525,handicap:3},{number:6,par:4,yards:404,handicap:1},{number:7,par:4,yards:365,handicap:11},{number:8,par:4,yards:382,handicap:5},
-{number:9,par:5,yards:509,handicap:7},{number:10,par:4,yards:371,handicap:10},{number:11,par:4,yards:393,handicap:4},{number:12,par:3,yards:183,handicap:18},
-{number:13,par:5,yards:531,handicap:6},{number:14,par:4,yards:310,handicap:16},{number:15,par:3,yards:194,handicap:14},{number:16,par:5,yards:542,handicap:8},
-{number:17,par:4,yards:387,handicap:2},{number:18,par:4,yards:390,handicap:12}]},
-
-// BEND GOLF CLUB - Blue (6529) - EXACT from scorecard PDF
-{id:'c_bend_blue',name:'Bend Golf Club',tees:'Blue',rating:71.2,slope:127,holes:[
-{number:1,par:4,yards:366,handicap:5},{number:2,par:5,yards:532,handicap:1},{number:3,par:3,yards:139,handicap:17},{number:4,par:4,yards:399,handicap:3},
-{number:5,par:4,yards:350,handicap:15},{number:6,par:3,yards:194,handicap:13},{number:7,par:4,yards:364,handicap:9},{number:8,par:4,yards:384,handicap:7},
-{number:9,par:5,yards:509,handicap:11},{number:10,par:4,yards:382,handicap:10},{number:11,par:3,yards:121,handicap:18},{number:12,par:4,yards:405,handicap:4},
-{number:13,par:5,yards:510,handicap:14},{number:14,par:4,yards:363,handicap:6},{number:15,par:5,yards:500,handicap:12},{number:16,par:3,yards:162,handicap:16},
-{number:17,par:4,yards:456,handicap:2},{number:18,par:4,yards:393,handicap:8}]},
-
-// BEND GOLF CLUB - Green (4552) - EXACT from scorecard PDF
-{id:'c_bend_green',name:'Bend Golf Club',tees:'Green',rating:61.7,slope:113,holes:[
-{number:1,par:4,yards:220,handicap:5},{number:2,par:5,yards:407,handicap:1},{number:3,par:3,yards:95,handicap:17},{number:4,par:4,yards:280,handicap:3},
-{number:5,par:4,yards:228,handicap:15},{number:6,par:3,yards:140,handicap:13},{number:7,par:4,yards:236,handicap:9},{number:8,par:4,yards:237,handicap:7},
-{number:9,par:5,yards:401,handicap:11},{number:10,par:4,yards:294,handicap:10},{number:11,par:3,yards:80,handicap:18},{number:12,par:4,yards:291,handicap:4},
-{number:13,par:5,yards:366,handicap:14},{number:14,par:4,yards:248,handicap:6},{number:15,par:5,yards:367,handicap:12},{number:16,par:3,yards:102,handicap:16},
-{number:17,par:4,yards:310,handicap:2},{number:18,par:4,yards:250,handicap:8}]},
-
-// SNOQUALMIE RIDGE - Blue (~6700, par 72)
-{id:'c_snoqualmie_blue',name:'Club at Snoqualmie Ridge',tees:'Blue',rating:73.0,slope:138,holes:[
-{number:1,par:4,yards:390,handicap:7},{number:2,par:5,yards:525,handicap:3},{number:3,par:4,yards:405,handicap:5},{number:4,par:3,yards:185,handicap:15},
-{number:5,par:4,yards:380,handicap:9},{number:6,par:4,yards:355,handicap:13},{number:7,par:3,yards:195,handicap:17},{number:8,par:5,yards:530,handicap:1},
-{number:9,par:4,yards:415,handicap:11},{number:10,par:4,yards:395,handicap:8},{number:11,par:3,yards:175,handicap:18},{number:12,par:4,yards:420,handicap:2},
-{number:13,par:5,yards:510,handicap:6},{number:14,par:4,yards:290,handicap:16},{number:15,par:4,yards:385,handicap:10},{number:16,par:3,yards:205,handicap:14},
-{number:17,par:5,yards:515,handicap:4},{number:18,par:4,yards:425,handicap:12}]},
-
-// SNOQUALMIE RIDGE - White (~6200, par 72)
-{id:'c_snoqualmie_white',name:'Club at Snoqualmie Ridge',tees:'White',rating:70.5,slope:132,holes:[
-{number:1,par:4,yards:360,handicap:7},{number:2,par:5,yards:485,handicap:3},{number:3,par:4,yards:374,handicap:5},{number:4,par:3,yards:171,handicap:15},
-{number:5,par:4,yards:351,handicap:9},{number:6,par:4,yards:328,handicap:13},{number:7,par:3,yards:180,handicap:17},{number:8,par:5,yards:490,handicap:1},
-{number:9,par:4,yards:383,handicap:11},{number:10,par:4,yards:365,handicap:8},{number:11,par:3,yards:162,handicap:18},{number:12,par:4,yards:388,handicap:2},
-{number:13,par:5,yards:471,handicap:6},{number:14,par:4,yards:268,handicap:16},{number:15,par:4,yards:356,handicap:10},{number:16,par:3,yards:189,handicap:14},
-{number:17,par:5,yards:476,handicap:4},{number:18,par:4,yards:393,handicap:12}]},
-
-// RANCHO DEL REY - Blue (6703) - EXACT from 18Birdies
-{id:'c_rancho_blue',name:'Rancho Del Rey Golf Club',tees:'Blue',rating:71.7,slope:124,holes:[
-{number:1,par:5,yards:500,handicap:13},{number:2,par:4,yards:367,handicap:11},{number:3,par:5,yards:480,handicap:15},{number:4,par:3,yards:216,handicap:3},
-{number:5,par:4,yards:321,handicap:17},{number:6,par:4,yards:441,handicap:5},{number:7,par:4,yards:404,handicap:9},{number:8,par:3,yards:199,handicap:7},
-{number:9,par:4,yards:450,handicap:1},{number:10,par:4,yards:349,handicap:14},{number:11,par:4,yards:364,handicap:16},{number:12,par:4,yards:419,handicap:4},
-{number:13,par:5,yards:505,handicap:6},{number:14,par:3,yards:177,handicap:8},{number:15,par:4,yards:448,handicap:2},{number:16,par:5,yards:513,handicap:18},
-{number:17,par:3,yards:188,handicap:10},{number:18,par:4,yards:362,handicap:12}]}
-];
-
-// Seed all preloaded courses
-(function seedCourses(){
-  const existing=DB.g('courses')||[];
-  const ids=new Set(existing.map(c=>c.id));
-  // Keep Micke Grove White that was already there
-  if(!ids.has('c_micke_grove')){existing.push(MICKE_GROVE);ids.add('c_micke_grove')}
-  PRELOADED_COURSES.forEach(c=>{if(!ids.has(c.id)){existing.push(c);ids.add(c.id)}});
-  DB.s('courses',existing);
-})();
-
-// ─── DOM ───────────────────────────────
-function h(t,a,...c){const e=document.createElement(t);if(a)Object.entries(a).forEach(([k,v])=>{if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==='style'&&typeof v==='object')Object.assign(e.style,v);else if(k==='disabled'){if(v)e.setAttribute('disabled','');else e.removeAttribute('disabled')}else if(k==='selected'&&v)e.selected=true;else if(k==='value'){e._deferValue=v}else e.setAttribute(k,v)});c.flat(Infinity).forEach(x=>{if(x!=null&&x!==false)e.appendChild(typeof x==='string'||typeof x==='number'?document.createTextNode(String(x)):x)});if(e._deferValue!==undefined){e.value=e._deferValue;delete e._deferValue}return e}
-function $(s){return document.querySelector(s)}
-function toast(m){const t=h('div',{class:'toast'},m);document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
-function ccd(s){const a=parseFloat(s.distToHole),b=parseFloat(s.endDistToHole);return(!isNaN(a)&&!isNaN(b)&&a>0)?Math.abs(a-b):0}
-function sc(d){return d<=-2?'var(--eagle)':d===-1?'var(--birdie)':d===0?'var(--par)':d===1?'var(--bogey)':d===2?'var(--double)':'var(--triple)'}
-function scb(d){return d<=-2?'#d4a01720':d===-1?'#c1121f20':d===0?'#2d6a4f20':d===1?'#1d4e8920':'#6c4ab620'}
-function elbg(e){return e==='Green'?'var(--positive-light)':e==='Fairway'?'var(--info-light)':e==='Penalty'?'var(--danger-light)':'var(--warn-light)'}
-function elfg(e){return e==='Green'?'var(--positive)':e==='Fairway'?'var(--info)':e==='Penalty'?'var(--danger)':'var(--warn)'}
-function mSel(l,v,o,fn){
-  return h('div',null,h('label',null,l),h('select',{class:'sel',value:v,onChange:function(){fn(this.value)}},
-    ...o.map(x=>typeof x==='string'?h('option',{value:x},x):h('option',{value:x.v},x.l))));
-}
-function mInp(l,v,fn,p){return h('div',null,h('label',null,l),h('input',{class:'inp',value:v!=null?String(v):'',onInput:function(){fn(this.value)},...(p||{})}))}
-function mM(l,v,s,c){return h('div',{class:'metric'},h('div',{class:'metric-label'},l),h('div',{class:'metric-val',style:c?{color:c}:{}},v),s?h('div',{class:'metric-sub'},s):null)}
-
-// ─── Analysis ──────────────────────────
-function analyze(rd){
-  const H=rd.holes;let ts=0,tp=0,fw=0,fa=0,gi=0,pu=0,pen=0,ud=0,ua=0,ss=0,sa=0,tp3=0;
-  let bi=0,pa=0,bo=0,db=0,ot=0,p3s=0,p3c=0,p4s=0,p4c=0,p5s=0,p5c=0;
-  let dm={},am={},sh={},cs={};
-  H.forEach(hole=>{
-    const shots=hole.shots||[];const s=shots.length||(hole.score||0);ts+=s;tp+=hole.par;const d=s-hole.par;
-    if(d<=-1)bi++;else if(d===0)pa++;else if(d===1)bo++;else if(d===2)db++;else if(d>=3)ot++;
-    if(hole.par===3){p3c++;p3s+=s}if(hole.par===4){p4c++;p4s+=s}if(hole.par===5){p5c++;p5s+=s}
-    const hp=shots.filter(x=>x.club==='Putter').length;pu+=hp;if(hp>=3)tp3++;
-    if(hole.par>=4&&shots.length>0){fa++;const t=shots[0];if(t&&t.endLie==='Fairway')fw++;if(t&&t.endLie&&t.endLie!=='Fairway')dm[t.endLie]=(dm[t.endLie]||0)+1}
-    const gi_idx=shots.findIndex(x=>x.endLie==='Green');if(gi_idx>=0&&gi_idx<=hole.par-2)gi++;
-    const girOk=gi_idx>=0&&gi_idx<=hole.par-2;
-    if(!girOk&&shots.length>0){const pi=shots.findIndex(x=>x.club==='Putter');if(pi>0){ua++;if(hp===1)ud++}}
-    const fb=shots.filter(x=>x.lie==='Bunker');
-    if(fb.length>0){sa++;const li=shots.lastIndexOf(fb[fb.length-1]);if(shots.slice(li+1).filter(x=>x.club==='Putter').length<=1)ss++}
-    shots.forEach(x=>{if(x.endLie==='Penalty')pen++;if(x.shape&&x.shape!=='Neutral'&&x.shape!=='Straight')sh[x.shape]=(sh[x.shape]||0)+1;
-      if(x.club&&x.club!=='Putter'&&!x.exempt){if(!cs[x.club])cs[x.club]={ct:0,ds:[],sh:{}};cs[x.club].ct++;const cd=ccd(x);if(cd>0)cs[x.club].ds.push(cd);if(x.shape)cs[x.club].sh[x.shape]=(cs[x.club].sh[x.shape]||0)+1}
-      if(!DCLUBS.includes(x.club)&&x.club!=='Putter'&&x.endLie&&x.endLie!=='Green')am[x.endLie]=(am[x.endLie]||0)+1});
-  });
-  const n=H.length||18;
-  return{ts,tp,diff:ts-tp,fwP:fa?Math.round(fw/fa*100):0,fw,fa,girP:n?Math.round(gi/n*100):0,gi,pu,ppg:n?(pu/n).toFixed(1):0,tp3,pen,bi,pa,bo,db,ot,
-    udP:ua?Math.round(ud/ua*100):0,ud,ua,ssP:sa?Math.round(ss/sa*100):0,ss,sa,
-    p3a:p3c?(p3s/p3c).toFixed(1):'—',p3c,p4a:p4c?(p4s/p4c).toFixed(1):'—',p4c,p5a:p5c?(p5s/p5c).toFixed(1):'—',p5c,dm,am,sh,cs};
-}
-
-function genInsights(st){
-  const ins=[];
-  if(+st.ppg>2.0)ins.push({a:'Putting',p:'high',t:'Putting leak',d:`${st.ppg} putts/hole, ${st.tp3} three-putts.`,dr:'Gate drill: 10 in a row from 6 ft.',im:Math.round((+st.ppg-1.8)*18)});
-  else if(st.tp3>=3)ins.push({a:'Putting',p:'high',t:'Three-putt problem',d:`${st.tp3} three-putts.`,dr:'Ladder: 20/30/40 ft, all within 3 ft.',im:st.tp3});
-  if(st.girP<40)ins.push({a:'Approaches',p:'high',t:'GIR critically low at '+st.girP+'%',d:'Forces scrambling. Focus on club selection.',dr:'10 shots each 8i/9i/PW to targets.',im:Math.round((0.55-st.girP/100)*18)});
-  if(st.fwP<50)ins.push({a:'Driving',p:st.fwP<35?'high':'medium',t:'Fairway accuracy: '+st.fwP+'%',d:'Missing fairways = harder approaches.',dr:'20 drives at 30-yd corridor.',im:Math.round((0.6-st.fwP/100)*14*0.3)});
-  if(st.pen>=2)ins.push({a:'Management',p:'high',t:st.pen+' penalty strokes',d:'~'+Math.round(st.pen*1.5)+' total cost.',dr:'Identify safe miss on every hazard shot.',im:Math.round(st.pen*1.5)});
-  if(st.udP<40&&st.ua>=4)ins.push({a:'Short game',p:'medium',t:'Up-and-down: '+st.udP+'%',d:`${st.ud}/${st.ua}. Tour avg ~58%.`,dr:'9-shot drill from 20 yds.',im:Math.round((0.55-st.udP/100)*st.ua)});
-  const hs=(st.sh['Hook']||0)+(st.sh['Slice']||0);
-  if(hs>=4)ins.push({a:'Shot shape',p:'medium',t:'Recurring hook/slice ('+hs+'x)',d:'Amplifies misses.',dr:'Path and face angle work.',im:Math.round(hs*0.5)});
-  ins.sort((a,b)=>{const o={high:0,medium:1,positive:2};return(o[a.p]??3)-(o[b.p]??3)||(b.im||0)-(a.im||0)});return ins;
-}
-
-// ─── Player Filter Component ──────────
-function renderPlayerFilter(el){
-  const players=getPlayers();
-  if(players.length<=1)return; // no filter needed for single player
-  const row=h('div',{style:{display:'flex',gap:'0.25rem',flexWrap:'wrap',marginBottom:'0.75rem',alignItems:'center'}});
-  row.appendChild(h('span',{style:{fontSize:'0.62rem',color:'var(--fg3)',fontWeight:500,textTransform:'uppercase',marginRight:'0.2rem'}},'Player:'));
-  row.appendChild(h('button',{class:'btn s',style:{
-    background:!S.filterPlayer?'var(--accent-light)':'var(--bg2)',color:!S.filterPlayer?'var(--accent)':'var(--fg2)',
-    border:!S.filterPlayer?'1px solid var(--accent)':'1px solid var(--border)',fontSize:'0.65rem',padding:'0.15rem 0.5rem'},
-    onClick:()=>{S.filterPlayer='';render()}},'All'));
-  players.forEach(p=>{
-    row.appendChild(h('button',{class:'btn s',style:{
-      background:S.filterPlayer===p?'var(--accent-light)':'var(--bg2)',color:S.filterPlayer===p?'var(--accent)':'var(--fg2)',
-      border:S.filterPlayer===p?'1px solid var(--accent)':'1px solid var(--border)',fontSize:'0.65rem',padding:'0.15rem 0.5rem'},
-      onClick:()=>{S.filterPlayer=p;render()}},p));
-  });
-  el.appendChild(row);
-}
-
-// ─── Render ────────────────────────────
-let ch_arr=[];function dc(){ch_arr.forEach(c=>c.destroy());ch_arr=[]}
-
-function render(){
-  dc();const r=$('#app');r.innerHTML='';
-  r.appendChild(h('div',{class:'header'},h('h1',null,'Fairway IQ'),h('span',null,'golf performance lab')));
-  const tb=h('div',{class:'tabs'});
-  [['courses','Courses'],['play','Play'],['analysis','Analysis'],['scores','Scores'],['goals','Goals'],['rounds','Rounds']].forEach(([id,l])=>
-    tb.appendChild(h('button',{class:'tab'+(S.tab===id?' active':''),onClick:()=>{S.tab=id;render()}},l)));
-  r.appendChild(tb);
-  const c=h('div',{class:'fi'});
-  ({courses:rC,play:rP,analysis:rA,scores:rScores,goals:rGoals,rounds:rR})[S.tab](c);
-  r.appendChild(c);
-  const dm=h('div',{class:'dm'});
-  dm.append(h('button',{class:'btn s',onClick:xp},'Export'),h('button',{class:'btn s',onClick:()=>$('#fi').click()},'Import'),
-    h('span',{style:{fontSize:'0.6rem',color:'var(--fg3)',alignSelf:'center'}},`${S.courses.length} courses · ${S.rounds.length} rounds`));
-  r.appendChild(dm);
-}
-
-// ─── COURSES ───────────────────────────
-function rC(el){
-  if(S.courses.length>0){el.appendChild(h('div',{class:'st'},'Saved courses'));
-    S.courses.forEach(c=>{const tp=c.holes.reduce((s,x)=>s+x.par,0);
-      el.appendChild(h('div',{class:'card',style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0.6rem 0.9rem'}},
-        h('div',null,h('div',{style:{fontWeight:500,fontSize:'0.88rem'}},c.name),h('div',{style:{fontSize:'0.68rem',color:'var(--fg3)'}},`${c.tees} · Par ${tp} · ${c.holes.reduce((s,x)=>s+x.yards,0)} yds`)),
-        h('div',{style:{display:'flex',gap:'0.3rem'}},h('button',{class:'btn s',onClick:()=>{S.cf=JSON.parse(JSON.stringify(c));S.editCourse=c.id;render()}},'Edit'),h('button',{class:'btn s d',onClick:()=>{S.courses=S.courses.filter(x=>x.id!==c.id);sv();render()}},'Del'))
-      ))});el.appendChild(h('div',{style:{height:'0.5rem'}}))}
-  const f=S.cf,cd=h('div',{class:'card'});
-  cd.appendChild(h('div',{class:'st'},S.editCourse?'Edit course':'New course'));
-  cd.appendChild(h('div',{class:'g2',style:{marginBottom:'0.6rem'}},mInp('Name',f.name,v=>{f.name=v},{placeholder:'Pine Valley GC'}),mSel('Tees',f.tees,TEES,v=>{f.tees=v})));
-  const g=h('div',{class:'hg'});g.append(h('div',{class:'hdr'},'Hole'),h('div',{class:'hdr'},'Par'),h('div',{class:'hdr'},'Yards'),h('div',{class:'hdr'},'Hdcp'));
-  f.holes.forEach((x,i)=>{if(i===9){g.appendChild(h('div',{class:'td'}));g.appendChild(h('div',{style:{gridColumn:'1/-1',fontSize:'0.55rem',color:'var(--accent)',fontWeight:600,textTransform:'uppercase'}},'Back nine'))}
-    g.appendChild(h('div',{style:{fontWeight:500}},String(x.number)));
-    g.appendChild(h('select',{class:'sel',value:String(x.par),style:{padding:'0.2rem'},onChange:function(){x.par=+this.value}},...[3,4,5].map(p=>h('option',{value:String(p)},String(p)))));
-    g.appendChild(h('input',{class:'inp',type:'number',value:String(x.yards),style:{padding:'0.2rem'},onInput:function(){x.yards=+this.value}}));
-    g.appendChild(h('input',{class:'inp',type:'number',value:String(x.handicap),style:{padding:'0.2rem'},onInput:function(){x.handicap=+this.value}}))});
-  cd.appendChild(g);
-  cd.appendChild(h('div',{style:{display:'flex',gap:'0.6rem',marginTop:'0.5rem',fontSize:'0.7rem',color:'var(--fg3)'}},
-    h('span',null,`Front: ${f.holes.slice(0,9).reduce((s,x)=>s+x.par,0)}`),h('span',null,`Back: ${f.holes.slice(9).reduce((s,x)=>s+x.par,0)}`),
-    h('span',{style:{fontWeight:500,color:'var(--fg)'}},`Par ${f.holes.reduce((s,x)=>s+x.par,0)} · ${f.holes.reduce((s,x)=>s+x.yards,0)} yds`)));
-  cd.appendChild(h('div',{style:{display:'flex',gap:'0.3rem',marginTop:'0.6rem'}},
-    h('button',{class:'btn p',onClick:()=>{if(!f.name.trim()){toast('Enter name');return}const id=S.editCourse||'c_'+Date.now(),d={...JSON.parse(JSON.stringify(f)),id};
-      if(S.editCourse)S.courses=S.courses.map(c=>c.id===id?d:c);else S.courses.push(d);S.cf=mkC();S.editCourse=null;sv();toast('Saved');render()}},S.editCourse?'Update':'Save'),
-    S.editCourse?h('button',{class:'btn',onClick:()=>{S.cf=mkC();S.editCourse=null;render()}},'Cancel'):null));
-  el.appendChild(cd);
-}
-
-// ─── PLAY ──────────────────────────────
-function rP(el){
-  if(!S.courses.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},'Set up a course first.'));return}
-  if(!S.aci||!S.courses.find(c=>c.id===S.aci))S.aci=S.courses[0].id;
-  const co=S.courses.find(c=>c.id===S.aci),ho=co.holes[S.ch-1],shots=S.hs[S.ch]||[];
-  const tpar=co.holes.reduce((s,x)=>s+x.par,0),tsh=Object.values(S.hs).reduce((s,a)=>s+a.length,0);
-  const hp=Object.keys(S.hs).filter(k=>S.hs[k]?.length>0).length,dif=tsh-tpar;
-  el.appendChild(h('div',{class:'g3',style:{marginBottom:'0.5rem'}},
-    mSel('Course',S.aci,S.courses.map(c=>{const ty=c.holes.reduce((s,x)=>s+x.yards,0);return{v:c.id,l:c.name+' ('+(c.tees||'')+(ty?' - '+ty+' yds':'')+')'}}),v=>{S.aci=v;S.hs={};S.ch=1;render()}),
-    mInp('Date',S.rd,v=>{S.rd=v},{type:'date'}),
-    h('div',{style:{display:'flex',alignItems:'end',paddingBottom:'0.2rem'}},h('div',{style:{fontSize:'0.72rem',color:'var(--fg3)'}},`${hp}/18 · ${tsh} shots (${dif>=0?'+':''}${tsh===0?'E':dif===0?'E':dif})`))));
-
-  // Player info
-  const players=getPlayers();
-  const playerRow=h('div',{style:{display:'flex',gap:'0.5rem',alignItems:'end',marginBottom:'0.7rem',flexWrap:'wrap'}});
-  const nameWrap=h('div',{style:{flex:'1',minWidth:'140px'}});
-  nameWrap.appendChild(h('label',null,'Player'));
-  if(players.length>0){
-    const btnRow=h('div',{style:{display:'flex',gap:'0.2rem',flexWrap:'wrap',marginBottom:'0.2rem'}});
-    players.forEach(p=>{btnRow.appendChild(h('button',{class:'btn s',style:{
-      background:S.playerName===p?'var(--accent-light)':'var(--bg2)',color:S.playerName===p?'var(--accent)':'var(--fg2)',
-      border:S.playerName===p?'1px solid var(--accent)':'1px solid var(--border)',fontSize:'0.65rem',padding:'0.15rem 0.45rem'},
-      onClick:()=>{S.playerName=p;const pr=S.rounds.filter(r=>r.player===p);
-        if(pr.length&&pr[pr.length-1].handicap!=null)S.playerHandicap=String(pr[pr.length-1].handicap);
-        DB.s('lastPlayer',p);render()}},p))});
-    nameWrap.appendChild(btnRow);
-  }
-  nameWrap.appendChild(h('input',{class:'inp',value:S.playerName,placeholder:'First name',
-    onInput:function(){S.playerName=this.value;DB.s('lastPlayer',this.value)}}));
-  playerRow.appendChild(nameWrap);
-  const hcWrap=h('div',{style:{width:'80px'}});
-  hcWrap.appendChild(h('label',null,'Handicap'));
-  hcWrap.appendChild(h('input',{class:'inp',type:'number',value:S.playerHandicap,placeholder:'e.g. 15',
-    onInput:function(){S.playerHandicap=this.value;DB.s('lastHandicap',this.value)}}));
-  playerRow.appendChild(hcWrap);
-  el.appendChild(playerRow);
-
-  el.appendChild(h('button',{class:'btn s',style:{marginBottom:'0.5rem'},onClick:()=>{S.showCond=!S.showCond;render()}},S.showCond?'Hide conditions':'Conditions'));
-  if(S.showCond){const cc=h('div',{class:'card',style:{marginBottom:'0.6rem'}});cc.appendChild(h('div',{class:'st'},'Round conditions'));
-    cc.appendChild(h('div',{class:'g3',style:{gap:'0.4rem'}},mSel('Greens',S.rc.greens,GREENS_COND,v=>{S.rc.greens=v}),
-      h('div',null,h('label',null,'Weather'),h('div',{style:{display:'flex',flexWrap:'wrap',gap:'0.2rem',marginTop:'0.1rem'}},
-        ...WEATHER_OPTS.map(w=>{const on=S.rc.weather.includes(w);return h('button',{class:'btn s',style:{background:on?'var(--accent-light)':'var(--bg2)',color:on?'var(--accent)':'var(--fg2)',border:on?'1px solid var(--accent)':'1px solid var(--border)',fontSize:'0.6rem',padding:'0.12rem 0.35rem'},
-          onClick:()=>{if(on)S.rc.weather=S.rc.weather.filter(x=>x!==w);else S.rc.weather.push(w);render()}},w)}))),
-      h('div',null,h('label',null,'Notes'),h('textarea',{value:S.rc.notes,placeholder:'Round notes...',onInput:function(){S.rc.notes=this.value}}))));el.appendChild(cc)}
-
-  const mn=h('div',{class:'mini-sc'});
-  co.holes.forEach((x,i)=>{const s=S.hs[i+1]||[],n=s.length,d=n-x.par,act=S.ch===i+1;
-    mn.appendChild(h('div',{class:'mh'+(act?' a':''),style:{background:n>0?sc(d):'var(--bg2)',color:n>0?'#fff':'var(--fg3)'},
-      onClick:()=>{S.ch=i+1;S.cs=mkS(true);S.cs.distToHole=String(co.holes[i].yards);render()}},h('div',{class:'n'},String(i+1)),h('div',null,n||'·')))});
-  el.appendChild(mn);
-
-  const cd=h('div',{class:'card'});
-  cd.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.6rem'}},
-    h('button',{class:'btn s',disabled:S.ch===1,onClick:()=>{S.ch--;S.cs=mkS(true);S.cs.distToHole=String(co.holes[S.ch-1].yards);render()}},'← Prev'),
-    h('div',{style:{textAlign:'center'}},h('div',{style:{fontSize:'1.2rem',fontWeight:600,fontFamily:'var(--font-display)'}},'Hole '+S.ch),h('div',{style:{fontSize:'0.74rem',color:'var(--fg3)'}},`Par ${ho.par} · ${ho.yards} yds · Hdcp ${ho.handicap}`)),
-    h('button',{class:'btn s',disabled:S.ch===18,onClick:()=>{S.ch++;S.cs=mkS(true);S.cs.distToHole=String(co.holes[S.ch-1].yards);render()}},'Next →')));
-
-  if(shots.length>0){const lg=h('div',{style:{borderBottom:'1px solid var(--border)',paddingBottom:'0.4rem',marginBottom:'0.5rem',overflowX:'auto'}});
-    lg.appendChild(h('div',{class:'sr hd'},h('div',null,'#'),h('div',null,'Club'),h('div',null,'Lie'),h('div',null,'Dist'),h('div',null,'Shape'),h('div',null,'End'),h('div',null,'EndD'),h('div',null,'Carry'),h('div',null,'Score')));
-    shots.forEach(s=>{const cd2=ccd(s),sc2=s.exempt?{total:'EX'}:scoreShot(s);
-      lg.appendChild(h('div',{class:'sr',style:s.exempt?{opacity:0.6}:{}},h('div',null,h('div',{class:'sn'},String(s.shotNumber))),h('div',{style:{fontWeight:500}},s.club),
-        h('div',{style:{fontSize:'0.58rem',color:'var(--fg2)'}},s.lie),h('div',null,s.distToHole?s.distToHole+'y':'—'),
-        h('div',{style:{fontSize:'0.58rem',color:'var(--fg2)'}},s.shape||'—'),
-        h('div',null,h('span',{class:'sb',style:{background:elbg(s.endLie),color:elfg(s.endLie)}},s.endLie)),
-        h('div',null,s.endDistToHole?s.endDistToHole+'y':'—'),h('div',{style:{fontWeight:500,color:cd2>0?'var(--accent)':'var(--fg3)'}},cd2>0?cd2+'y':'—'),
-        h('div',{style:{fontWeight:600,color:s.exempt?'var(--fg3)':scoreColor100(sc2.total),fontSize:'0.7rem'}},s.exempt?'EX':String(sc2.total))))});
-    lg.appendChild(h('button',{class:'btn s',style:{marginTop:'0.3rem'},onClick:()=>{S.hs[S.ch]=shots.slice(0,-1);if(!S.hs[S.ch].length)delete S.hs[S.ch];render()}},'Undo'));
-    cd.appendChild(lg)}
-
-  if(shots.length>0){const d=shots.length-ho.par;const nm={'-3':'Albatross','-2':'Eagle','-1':'Birdie','0':'Par','1':'Bogey','2':'Double','3':'Triple+'};
-    cd.appendChild(h('div',{style:{textAlign:'center',marginBottom:'0.5rem',padding:'0.3rem',borderRadius:'var(--radius)',background:scb(d)}},
-      h('span',{style:{fontSize:'0.78rem',fontWeight:500,color:sc(d)}},`${shots.length} shots — ${d>0?'+':''}${d} (${nm[String(Math.min(Math.max(d,-3),3))]||'+'+(d)})`)))}
-
-  const cs=S.cs;cs.shotNumber=shots.length+1;
-  cd.appendChild(h('div',{style:{fontSize:'0.65rem',fontWeight:500,color:'var(--fg3)',marginBottom:'0.35rem',textTransform:'uppercase',letterSpacing:'0.05em'}},`Shot ${cs.shotNumber}${shots.length===0?' (tee shot)':''}`));
-  const fm=h('div',{class:'g4',style:{marginBottom:'0.4rem'}});
-  fm.append(mSel('Lie',cs.lie,LIES,v=>{cs.lie=v;if(v==='Green'){cs.club='Putter';cs.endLie='Green'}if(v==='Tee')cs.club='Dr';render()}),
-    mInp('Dist to hole',cs.distToHole,v=>{cs.distToHole=v},{type:'number',placeholder:'yds'}),
-    mSel('Club',cs.club,CLUBS,v=>{cs.club=v}),mSel('Shape',cs.shape,SHAPES,v=>{cs.shape=v}));
-  const fm2=h('div',{class:'g4',style:{marginBottom:'0.4rem'}});
-  fm2.append(mSel('End lie',cs.endLie,END_LIES,v=>{cs.endLie=v;render()}),
-    mInp('End dist',cs.endDistToHole,v=>{cs.endDistToHole=v},{type:'number',placeholder:'yds'}),
-    h('div',null,h('label',null,'Club dist (calc)'),h('div',{style:{padding:'0.4rem 0.5rem',fontSize:'0.8rem',fontWeight:500,color:'var(--accent)',background:'var(--bg2)',borderRadius:'var(--radius)'}},
-      (()=>{const a=parseFloat(cs.distToHole),b=parseFloat(cs.endDistToHole);return(!isNaN(a)&&!isNaN(b)&&a>0)?Math.abs(a-b)+' yds':'—'})())),h('div'));
-  cd.appendChild(fm);cd.appendChild(fm2);
-
-  // Exempt shot checkbox
-  const exemptRow=h('div',{style:{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.5rem',marginTop:'0.2rem'}});
-  const exemptCb=h('input',{type:'checkbox',style:{width:'16px',height:'16px',cursor:'pointer',accentColor:'var(--accent)'},
-    onChange:function(){cs.exempt=this.checked}});
-  if(cs.exempt)exemptCb.checked=true;
-  exemptRow.append(exemptCb,h('span',{style:{fontSize:'0.74rem',color:'var(--fg2)',cursor:'pointer'},onClick:function(){exemptCb.checked=!exemptCb.checked;cs.exempt=exemptCb.checked}},'Exempt shot'),
-    h('span',{style:{fontSize:'0.6rem',color:'var(--fg3)',fontStyle:'italic'}},'(excludes from club scoring — use for punch-outs, intentional layups, etc.)'));
-  cd.appendChild(exemptRow);
-
-  cd.appendChild(h('button',{class:'btn p',onClick:()=>{
-    const ns={...cs,shotNumber:shots.length+1};const a=parseFloat(cs.distToHole),b=parseFloat(cs.endDistToHole);
-    ns.clubDist=(!isNaN(a)&&!isNaN(b)&&a>0)?Math.abs(a-b):null;
-    const nw=[...shots,ns];S.hs[S.ch]=nw;const og=ns.endLie==='Green';const nl=ns.endLie==='Penalty'?ns.lie:ns.endLie;
-    S.cs={shotNumber:nw.length+1,lie:og?'Green':(LIES.includes(nl)?nl:'Fairway'),distToHole:ns.endDistToHole||'',club:og?'Putter':'7i',endLie:og?'Green':'Green',shape:'Neutral',endDistToHole:'',clubDist:null,exempt:false};render()}},'Log shot'));
-  el.appendChild(cd);
-  el.appendChild(h('div',{style:{display:'flex',justifyContent:'center',marginTop:'1rem'}},
-    h('button',{class:'btn p',disabled:hp===0||!S.playerName.trim(),style:{fontSize:'0.9rem',padding:'0.65rem 2rem'},onClick:()=>{
-      if(!S.playerName.trim()){toast('Enter player name');return}
-      const hc=parseFloat(S.playerHandicap);
-      const rd={id:'r_'+Date.now(),courseId:co.id,courseName:co.name,courseTees:co.tees||'',date:S.rd,
-        player:S.playerName.trim(),handicap:!isNaN(hc)?hc:null,
-        conditions:{...S.rc},
-        holes:co.holes.map((x,i)=>{const sh=S.hs[i+1]||[];return{...x,shots:sh,score:sh.length}})};
-      S.rounds.push(rd);S.hs={};S.ch=1;S.cs=mkS(true);S.rc={greens:'Medium',weather:[],notes:''};
-      S.sri=rd.id;S.tab='scores';S.filterPlayer=rd.player;sv();toast(`Saved: ${rd.player} — ${rd.holes.reduce((s,x)=>s+x.score,0)}`);render()
-    }},`Finish round (${hp} holes)${S.playerName.trim()?` — ${S.playerName.trim()}`:''}`)));
-}
-
-// ─── SCORES TAB (NEW) ─────────────────
-function rScores(el){
-  const fr=getFilteredRounds();
-  if(!fr.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},S.rounds.length?'No rounds for this player.':'No rounds yet.'));renderPlayerFilter(el);return}
-  renderPlayerFilter(el);
-  if(!S.sri||!fr.find(r=>r.id===S.sri))S.sri=fr[fr.length-1].id;
-  const rd=fr.find(r=>r.id===S.sri);if(!rd){S.sri=fr[fr.length-1].id;render();return}
-
-  el.appendChild(h('div',{style:{display:'flex',gap:'0.5rem',alignItems:'center',marginBottom:'0.7rem'}},
-    h('label',{style:{marginBottom:0}},'Round:'),
-    h('select',{class:'sel',style:{flex:1},value:S.sri,onChange:function(){S.sri=this.value;render()}},
-      ...fr.slice().reverse().map(r=>h('option',{value:r.id},`${r.date} — ${r.courseName}${r.courseTees?" ("+r.courseTees+")":""}${r.player?' ('+r.player+')':''}`)))));
-
-  if(fr.length>=2){
-    el.appendChild(h('div',{style:{display:'flex',gap:'0.4rem',marginBottom:'0.7rem'}},
-      h('button',{class:'btn s'+(S.av!=='cum'?' p':''),onClick:()=>{S.av='single';render()}},'This round'),
-      h('button',{class:'btn s'+(S.av==='cum'?' p':''),onClick:()=>{S.av='cum';render()}},'All rounds ('+fr.length+')')));
-  }
-
-  if(S.av==='cum'&&S.rounds.length>=2){
-    rCumScores(el);return;
-  }
-
-  const scores=scoreRound(rd);
-  const stat=analyze(rd);
-
-  // Overall score
-  el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'1.25rem'}},
-    h('div',{style:{fontSize:'0.6rem',color:'var(--fg3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:'0.3rem'}},'Overall round score'),
-    h('div',{style:{fontSize:'3rem',fontWeight:600,fontFamily:'var(--font-display)',color:scoreColor100(scores.overall)}},scores.overall!==null?String(scores.overall):'—'),
-    h('div',{style:{fontSize:'0.72rem',color:'var(--fg3)',marginTop:'0.2rem'}},`${stat.ts} strokes · Par ${stat.tp} · ${stat.diff>=0?'+':''}${stat.diff}`),
-    h('div',{class:'cat-bar',style:{maxWidth:'200px',margin:'0.6rem auto 0'}},h('div',{class:'cat-fill',style:{width:scoreBarWidth(scores.overall),background:scoreBarColor(scores.overall||0)}}))
-  ));
-
-  // Category scores
-  const catGrid=h('div',{class:'mg c4',style:{marginBottom:'0.75rem'}});
-  [{key:'driving',label:'Driving'},{key:'irons',label:'Irons'},{key:'shortGame',label:'Short game'},{key:'putting',label:'Putting'}].forEach(cat=>{
-    const c=scores[cat.key];
-    catGrid.appendChild(h('div',{class:'metric cat-card'},
-      h('div',{class:'cat-score',style:{color:scoreColor100(c.score)}},c.score!==null?String(c.score):'—'),
-      h('div',{class:'cat-label'},cat.label),
-      h('div',{style:{fontSize:'0.58rem',color:'var(--fg3)',marginTop:'0.1rem'}},c.count+' shots'),
-      h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:scoreBarWidth(c.score),background:scoreBarColor(c.score||0)}}))
-    ));
-  });
-  el.appendChild(catGrid);
-
-  // PGA benchmark comparison
-  el.appendChild(h('div',{class:'st'},'PGA Tour comparison'));
-  const benchCard=h('div',{class:'card'});
-  [{label:'Driving',score:scores.driving.score,pgaRef:'100 = PGA avg carry'},
-   {label:'Irons',score:scores.irons.score,pgaRef:'100 = PGA distance + proximity'},
-   {label:'Short game',score:scores.shortGame.score,pgaRef:'100 = PGA proximity from <50y'},
-   {label:'Putting',score:scores.putting.score,pgaRef:'100 = PGA make % by distance'}
-  ].forEach(item=>{
-    const sec=h('div',{class:'score-section'});
-    sec.append(
-      h('div',{class:'score-info'},
-        h('div',{class:'score-club-name'},item.label),
-        h('div',{class:'score-club-detail'},item.pgaRef)),
-      h('div',{class:'score-value',style:{color:scoreColor100(item.score)}},item.score!==null?String(item.score):'—'),
-      h('div',{style:{width:'80px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:scoreBarWidth(item.score),background:scoreBarColor(item.score||0)}})))
-    );
-    benchCard.appendChild(sec);
-  });
-  el.appendChild(benchCard);
-
-  // Per-club breakdown
-  el.appendChild(h('div',{class:'st',style:{marginTop:'0.75rem'}},'Club-by-club scores'));
-  const clubCard=h('div',{class:'card'});
-  const clubScores={};
-  scores.allScores.forEach(s=>{
-    const club=s.shot.club;if(!clubScores[club])clubScores[club]={scores:[],shots:[]};
-    clubScores[club].scores.push(s.total);clubScores[club].shots.push(s);
-  });
-  CLUBS.filter(c=>clubScores[c]).forEach(club=>{
-    const data=clubScores[club];
-    const avg=Math.round(data.scores.reduce((s,v)=>s+v,0)/data.scores.length);
-    const pgaCarry=PGA_CARRY[club];
-    const avgDist=data.shots.filter(s=>s.shot.clubDist>0).length?
-      Math.round(data.shots.filter(s=>s.shot.clubDist>0).reduce((s,x)=>s+x.shot.clubDist,0)/data.shots.filter(s=>s.shot.clubDist>0).length):null;
-    const sec=h('div',{class:'score-section'});
-    sec.append(
-      h('div',{class:'score-info'},
-        h('div',{class:'score-club-name'},club),
-        h('div',{class:'score-club-detail'},
-          `${data.scores.length} shots${avgDist?` · Avg ${avgDist}y`:''}`+(pgaCarry&&club!=='Putter'?` · PGA: ${pgaCarry}y`:''))),
-      h('div',{class:'score-value',style:{color:scoreColor100(avg)}},String(avg)),
-      h('div',{style:{width:'70px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:scoreBarWidth(avg),background:scoreBarColor(avg)}})))
-    );
-    clubCard.appendChild(sec);
-  });
-  el.appendChild(clubCard);
-
-  // Score trend chart if multiple rounds
-  if(S.rounds.length>=2){
-    el.appendChild(h('div',{class:'st',style:{marginTop:'0.75rem'}},'Score trend'));
-    const tc=h('div',{class:'card'});
-    tc.appendChild(h('div',{style:{position:'relative',height:'200px'}},h('canvas',{id:'score-trend'})));
-    el.appendChild(tc);
-    setTimeout(()=>{const x=document.getElementById('score-trend');if(!x)return;
-      const allScores=S.rounds.map(r=>scoreRound(r));
-      ch_arr.push(new Chart(x,{type:'line',data:{labels:S.rounds.map(r=>r.date),datasets:[
-        {label:'Overall',data:allScores.map(s=>s.overall),borderColor:'#2d6a4f',tension:0.3,pointRadius:4,pointBackgroundColor:'#2d6a4f'},
-        {label:'Driving',data:allScores.map(s=>s.driving.score),borderColor:'#1d4e89',tension:0.3,pointRadius:3,borderDash:[5,3]},
-        {label:'Irons',data:allScores.map(s=>s.irons.score),borderColor:'#b07d10',tension:0.3,pointRadius:3,borderDash:[5,3]},
-        {label:'Putting',data:allScores.map(s=>s.putting.score),borderColor:'#c1121f',tension:0.3,pointRadius:3,borderDash:[5,3]}]},
-        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}}},
-          scales:{y:{min:0,max:125,grid:{color:'rgba(128,128,128,0.06)'}},x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45}}}}}))},50);
+  // Outside the table: extrapolate gently, clamp to a sane range.
+  if(higher){
+    if(val>xs[0]) return Math.max(-3, 0 - (val-xs[0])/((xs[0]-xs[1])/4)); // better than scratch
+    return Math.min(28, ts[ts.length-1] + (xs[xs.length-1]-val)/((xs[xs.length-2]-xs[xs.length-1])/4));
+  }else{
+    if(val<xs[0]) return Math.max(-3, 0 - (xs[0]-val)/((xs[1]-xs[0])/4));
+    return Math.min(28, ts[ts.length-1] + (val-xs[xs.length-1])/((xs[xs.length-1]-xs[xs.length-2])/4));
   }
 }
 
-function rCumScores(el){
-  const fr=getFilteredRounds();
-  const allScored=fr.map(r=>scoreRound(r));
-  const avg=arr=>{const v=arr.filter(x=>x!==null);return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length):null};
-
-  const cumOverall=avg(allScored.map(s=>s.overall));
-  const cumDriving=avg(allScored.map(s=>s.driving.score));
-  const cumIrons=avg(allScored.map(s=>s.irons.score));
-  const cumShort=avg(allScored.map(s=>s.shortGame.score));
-  const cumPutt=avg(allScored.map(s=>s.putting.score));
-
-  el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'1.25rem'}},
-    h('div',{style:{fontSize:'0.6rem',color:'var(--fg3)',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:'0.3rem'}},'Cumulative score ('+S.rounds.length+' rounds)'),
-    h('div',{style:{fontSize:'3rem',fontWeight:600,fontFamily:'var(--font-display)',color:scoreColor100(cumOverall)}},cumOverall!==null?String(cumOverall):'—'),
-    h('div',{class:'cat-bar',style:{maxWidth:'200px',margin:'0.5rem auto 0'}},h('div',{class:'cat-fill',style:{width:scoreBarWidth(cumOverall),background:scoreBarColor(cumOverall||0)}}))
-  ));
-
-  el.appendChild(h('div',{class:'mg c4',style:{marginBottom:'0.75rem'}},
-    h('div',{class:'metric cat-card'},h('div',{class:'cat-score',style:{color:scoreColor100(cumDriving)}},cumDriving??'—'),h('div',{class:'cat-label'},'Driving'),h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:scoreBarWidth(cumDriving),background:scoreBarColor(cumDriving||0)}}))),
-    h('div',{class:'metric cat-card'},h('div',{class:'cat-score',style:{color:scoreColor100(cumIrons)}},cumIrons??'—'),h('div',{class:'cat-label'},'Irons'),h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:scoreBarWidth(cumIrons),background:scoreBarColor(cumIrons||0)}}))),
-    h('div',{class:'metric cat-card'},h('div',{class:'cat-score',style:{color:scoreColor100(cumShort)}},cumShort??'—'),h('div',{class:'cat-label'},'Short game'),h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:scoreBarWidth(cumShort),background:scoreBarColor(cumShort||0)}}))),
-    h('div',{class:'metric cat-card'},h('div',{class:'cat-score',style:{color:scoreColor100(cumPutt)}},cumPutt??'—'),h('div',{class:'cat-label'},'Putting'),h('div',{class:'cat-bar'},h('div',{class:'cat-fill',style:{width:scoreBarWidth(cumPutt),background:scoreBarColor(cumPutt||0)}})))
-  ));
-
-  // Cumulative club distances
-  const allClub={};
-  allScored.forEach(rs=>{rs.allScores.forEach(s=>{
-    const c=s.shot.club;if(!allClub[c])allClub[c]={scores:[],dists:[]};
-    allClub[c].scores.push(s.total);if(s.shot.clubDist>0)allClub[c].dists.push(s.shot.clubDist)})});
-
-  el.appendChild(h('div',{class:'st',style:{marginTop:'0.5rem'}},'Club scores vs PGA benchmark'));
-  const tbl=h('div',{class:'card'});
-  CLUBS.filter(c=>allClub[c]&&allClub[c].scores.length>0).forEach(club=>{
-    const d=allClub[club],avgScore=Math.round(d.scores.reduce((s,v)=>s+v,0)/d.scores.length);
-    const avgDist=d.dists.length?Math.round(d.dists.reduce((s,v)=>s+v,0)/d.dists.length):null;
-    const pga=PGA_CARRY[club];
-    tbl.appendChild(h('div',{class:'score-section'},
-      h('div',{class:'score-info'},h('div',{class:'score-club-name'},club),
-        h('div',{class:'score-club-detail'},`${d.scores.length} shots${avgDist?` · Avg ${avgDist}y`:''}${pga&&club!=='Putter'?` · PGA ${pga}y`:''}`)),
-      h('div',{class:'score-value',style:{color:scoreColor100(avgScore)}},String(avgScore)),
-      h('div',{style:{width:'70px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:scoreBarWidth(avgScore),background:scoreBarColor(avgScore)}})))));
+function estimateHcp(s){
+  const present=[];
+  if(s.girElig) present.push(['gir', s.gir]);
+  if(s.putts>0) present.push(['putts', s.putts]);
+  if(s.scrOpp) present.push(['scramble', s.scramble]);
+  if(s.p6att) present.push(['p6', s.p6]);
+  present.push(['threeP', s.threeP]);
+  present.push(['dbl', s.dbl]);
+  const W={gir:3, scramble:2, dbl:2, putts:1, threeP:1, p6:1};
+  let wsum=0, hsum=0;
+  const perMetric=present.map(([m,v])=>{
+    const h=statToHcp(m,v); const w=W[m]||1;
+    wsum+=w; hsum+=h*w;
+    return {m,v,h,w};
   });
-  el.appendChild(tbl);
-
-  // Trend
-  el.appendChild(h('div',{class:'st',style:{marginTop:'0.5rem'}},'Score trend'));
-  const tc=h('div',{class:'card'});tc.appendChild(h('div',{style:{position:'relative',height:'200px'}},h('canvas',{id:'cum-score-trend'})));el.appendChild(tc);
-  setTimeout(()=>{const x=document.getElementById('cum-score-trend');if(!x)return;
-    ch_arr.push(new Chart(x,{type:'line',data:{labels:S.rounds.map(r=>r.date),datasets:[
-      {label:'Overall',data:allScored.map(s=>s.overall),borderColor:'#2d6a4f',tension:0.3,pointRadius:4,pointBackgroundColor:'#2d6a4f',fill:true,backgroundColor:'#2d6a4f18'},
-      {label:'Driving',data:allScored.map(s=>s.driving.score),borderColor:'#1d4e89',tension:0.3,pointRadius:2,borderDash:[4,3]},
-      {label:'Putting',data:allScored.map(s=>s.putting.score),borderColor:'#c1121f',tension:0.3,pointRadius:2,borderDash:[4,3]}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}}},
-        scales:{y:{min:0,max:125,grid:{color:'rgba(128,128,128,0.06)'}},x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45}}}}}))},50);
+  return {est:hsum/wsum, perMetric};
 }
 
-// ─── ANALYSIS TAB ──────────────────────
-function rA(el){
-  const fr=getFilteredRounds();
-  if(!fr.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},S.rounds.length?'No rounds for this player.':'No rounds yet.'));renderPlayerFilter(el);return}
-  renderPlayerFilter(el);
-  if(!S.sri||!fr.find(r=>r.id===S.sri))S.sri=fr[fr.length-1].id;
-  const rd=fr.find(r=>r.id===S.sri);if(!rd){S.sri=fr[fr.length-1].id;render();return}
-  el.appendChild(h('div',{style:{display:'flex',gap:'0.5rem',alignItems:'center',marginBottom:'0.7rem'}},h('label',{style:{marginBottom:0}},'Round:'),
-    h('select',{class:'sel',style:{flex:1},value:S.sri,onChange:function(){S.sri=this.value;render()}},
-      ...fr.slice().reverse().map(r=>h('option',{value:r.id},`${r.date} — ${r.courseName}${r.courseTees?" ("+r.courseTees+")":""}${r.player?' ('+r.player+')':''}`)))));
-  const st=analyze(rd),ins=genInsights(st);
-  // Conditions
-  if(rd.conditions){const c=rd.conditions,tags=[];if(c.greens)tags.push('Greens: '+c.greens);if(c.weather)c.weather.forEach(w=>tags.push(w));
-    if(tags.length||c.notes){el.appendChild(h('div',{class:'card',style:{marginBottom:'0.5rem',padding:'0.5rem 0.8rem'}},
-      tags.length?h('div',{style:{display:'flex',gap:'0.2rem',flexWrap:'wrap'}},...tags.map(t=>h('span',{class:'ct'},t))):null,
-      c.notes?h('div',{style:{fontSize:'0.74rem',color:'var(--fg2)',marginTop:'0.2rem',fontStyle:'italic'}},c.notes):null))}}
-  el.appendChild(h('div',{class:'mg c4'},mM('Score',String(st.ts),`${st.diff>=0?'+':''}${st.diff}`,st.diff<=0?'var(--positive)':'var(--danger)'),mM('FW%',st.fwP+'%',`${st.fw}/${st.fa}`),mM('GIR',st.girP+'%',`${st.gi}/18`),mM('Putts',String(st.pu),`${st.ppg}/hole`)));
-  el.appendChild(h('div',{class:'mg c4'},mM('Up&down',st.udP+'%',`${st.ud}/${st.ua}`),mM('Sand',st.ssP+'%'),mM('Penalties',String(st.pen),null,st.pen?'var(--danger)':null),mM('3-putts',String(st.tp3),null,st.tp3?'var(--warn)':null)));
-  el.appendChild(h('div',{class:'mg c3',style:{marginBottom:'0.8rem'}},mM('Par 3',st.p3a),mM('Par 4',st.p4a),mM('Par 5',st.p5a)));
-
-  // Club distances
-  if(Object.keys(st.cs).length){const cd=h('div',{class:'card',style:{marginBottom:'0.5rem'}});cd.appendChild(h('div',{class:'st'},'Club distances'));
-    const tb=h('table',{class:'cdt'});tb.appendChild(h('thead',null,h('tr',null,h('th',null,'Club'),h('th',null,'Shots'),h('th',null,'Avg'),h('th',null,'PGA'),h('th',null,'Shape'))));
-    const tbody=h('tbody');CLUBS.filter(c=>c!=='Putter'&&st.cs[c]).forEach(c=>{const d=st.cs[c],ds=d.ds.filter(x=>x>0);
-      const avg=ds.length?Math.round(ds.reduce((s,v)=>s+v,0)/ds.length):'—';const pga=PGA_CARRY[c]||'—';
-      const ts=Object.entries(d.sh).sort((a,b)=>b[1]-a[1])[0];
-      tbody.appendChild(h('tr',null,h('td',null,c),h('td',null,String(d.ct)),h('td',{style:{fontWeight:500,color:'var(--accent)'}},avg!=='—'?avg+'y':'—'),
-        h('td',{style:{color:'var(--fg3)'}},pga!=='—'?pga+'y':'—'),h('td',null,ts?ts[0]:'—')))});
-    tb.appendChild(tbody);cd.appendChild(tb);el.appendChild(cd)}
-
-  // Scorecard
-  rSC(el,rd,st);
-
-  // ─── Projected Score Analysis ─────────
-  rProjectedScore(el,rd,st);
-
-  el.appendChild(h('div',{class:'st',style:{marginTop:'0.8rem'}},'Improvement focus'));
-  if(!ins.length)el.appendChild(h('div',{class:'card'},h('div',{style:{textAlign:'center',padding:'0.6rem',color:'var(--fg3)'}},'Nothing flagged.')));
-  else ins.forEach(i=>el.appendChild(rI(i)));
-  if(S.rounds.length>=2)rH(el);
-}
-
-function rProjectedScore(el,round,st){
-  const holes=round.holes||[];
-  if(!holes.length||!holes.some(h=>h.shots&&h.shots.length))return;
-
-  const cats={
-    driving:{label:'Driving',saved:0,details:[]},
-    irons:{label:'Irons',saved:0,details:[]},
-    shortGame:{label:'Short game',saved:0,details:[]},
-    putting:{label:'Putting',saved:0,details:[]}
+function renderHandicap(s){
+  const el=document.getElementById('hcp');
+  if(!s.filled || s.filled<18){
+    el.innerHTML = s.filled? `<div class="head"><div><div class="lbl">Round handicap estimate</div><div style="font-size:13px;color:var(--mute);margin-top:4px">Enter all 18 holes to estimate this round's handicap.</div></div></div>` : '';
+    return;
+  }
+  const {est, perMetric}=estimateHcp(s);
+  const estR=Math.round(est*10)/10;
+  const checkpoint = est<=4;
+  const pinPct=(h)=>{const c=Math.max(0,Math.min(20,h)); return (c/20*100);};
+  const fmtVal=(m,v)=>{
+    if(m==='gir'||m==='scramble'||m==='p6') return v.toFixed(0)+'%';
+    if(m==='putts') return v.toFixed(0);
+    return v.toString();
   };
-
-  holes.forEach(hole=>{
-    const shots=hole.shots||[];
-    const par=hole.par;const score=shots.length;
-    if(score<=par)return;
-    const overPar=score-par;
-    const puttCount=shots.filter(s=>s.club==='Putter').length;
-
-    // Driving: penalty off tee or missed fairway
-    if(par>=4&&shots.length>0){
-      const ts=shots[0];
-      if(ts.endLie==='Penalty'){
-        cats.driving.saved+=2;
-        cats.driving.details.push({hole:hole.number,issue:'Penalty off tee',cost:2});
-      }else if(['Rough','Bunker','Waste Area','Hazard'].includes(ts.endLie)&&overPar>=1){
-        cats.driving.saved+=0.5;
-        cats.driving.details.push({hole:hole.number,issue:'Missed FW → '+ts.endLie,cost:0.5});
-      }
-    }
-
-    // Putting: three-putts
-    if(puttCount>=3){
-      const extra=puttCount-2;
-      cats.putting.saved+=extra;
-      cats.putting.details.push({hole:hole.number,issue:puttCount+'-putt',cost:extra});
-    }
-
-    // GIR check
-    const greenIdx=shots.findIndex(s=>s.endLie==='Green');
-    const girMade=greenIdx>=0&&greenIdx<=par-2;
-
-    // Iron miss: approach shots that didn't reach green in regulation
-    if(!girMade&&overPar>=1){
-      const approaches=shots.filter((s,i)=>i>0&&s.club!=='Putter'&&!['PW','W50','W56','W60'].includes(s.club)&&s.lie!=='Green'&&s.lie!=='Fringe');
-      if(approaches.some(s=>s.endLie==='Penalty')){
-        cats.irons.saved+=1.5;
-        cats.irons.details.push({hole:hole.number,issue:'Approach → penalty',cost:1.5});
-      }else if(approaches.length>0&&puttCount<=2){
-        cats.irons.saved+=0.5;
-        cats.irons.details.push({hole:hole.number,issue:'Missed GIR (iron)',cost:0.5});
-      }
-    }
-
-    // Short game: failed up-and-down
-    if(!girMade&&puttCount<=2&&overPar>=1){
-      const wedges=shots.filter(s=>['PW','W50','W56','W60'].includes(s.club)||(s.lie==='Bunker'&&s.club!=='Putter'));
-      if(wedges.length>0){
-        const last=wedges[wedges.length-1];
-        const ed=parseFloat(last.endDistToHole);
-        if(ed>5||last.endLie!=='Green'){
-          cats.shortGame.saved+=0.5;
-          cats.shortGame.details.push({hole:hole.number,issue:'Poor chip/pitch'+(ed?' ('+Math.round(ed)+'y left)':''),cost:0.5});
-        }
-      }
-    }
-  });
-
-  const projections=Object.entries(cats).filter(([_,c])=>c.saved>0)
-    .map(([key,c])=>({...c,key,projected:Math.round((st.ts-c.saved)*10)/10}))
-    .sort((a,b)=>b.saved-a.saved);
-
-  if(!projections.length)return;
-
-  el.appendChild(h('div',{class:'st',style:{marginTop:'1rem'}},'"What if" projected scores'));
-  el.appendChild(h('div',{style:{fontSize:'0.74rem',color:'var(--fg2)',marginBottom:'0.6rem',lineHeight:1.5}},
-    'Improving your weakest area to a reasonable level — here\'s the stroke impact:'));
-
-  const card=h('div',{class:'card'});
-  card.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',paddingBottom:'0.5rem',borderBottom:'1px solid var(--border)',marginBottom:'0.4rem'}},
-    h('div',{style:{fontSize:'0.7rem',color:'var(--fg3)'}},'Actual score'),
-    h('div',{style:{fontSize:'1.2rem',fontWeight:600,fontFamily:'var(--font-display)'}},st.ts+' ('+(st.diff>=0?'+':'')+st.diff+')')
-  ));
-
-  projections.forEach(proj=>{
-    const sv=Math.round(proj.saved*10)/10;
-    const ps=Math.round((st.ts-sv)*10)/10;
-    const pd=Math.round((ps-st.tp)*10)/10;
-    const row=h('div',{style:{padding:'0.45rem 0',borderBottom:'0.5px solid var(--border)'}});
-    row.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.2rem'}},
-      h('div',null,
-        h('span',{style:{fontSize:'0.82rem',fontWeight:500}},proj.label),
-        h('span',{style:{fontSize:'0.66rem',color:'var(--positive)',fontWeight:500,marginLeft:'0.4rem'}},'−'+sv+' stroke'+(sv!==1?'s':''))),
-      h('div',{style:{textAlign:'right'}},
-        h('div',{style:{fontSize:'1.05rem',fontWeight:600,fontFamily:'var(--font-display)',color:'var(--positive)'}},ps+' ('+(pd>=0?'+':'')+pd+')'),
-        h('div',{style:{fontSize:'0.55rem',color:'var(--fg3)'}},'projected'))
-    ));
-    if(proj.details.length){
-      row.appendChild(h('div',{style:{display:'flex',flexWrap:'wrap',gap:'0.2rem',marginTop:'0.15rem'}},
-        ...proj.details.map(d=>h('span',{style:{fontSize:'0.6rem',padding:'0.08rem 0.35rem',borderRadius:'3px',background:'var(--bg2)',color:'var(--fg2)'}},
-          '#'+d.hole+': '+d.issue+' (−'+d.cost+')'))));
-    }
-    card.appendChild(row);
-  });
-
-  const totalSv=projections.reduce((s,p)=>s+p.saved,0);
-  if(projections.length>1&&totalSv>1){
-    const bs=Math.round((st.ts-totalSv)*10)/10;
-    const bd=Math.round((bs-st.tp)*10)/10;
-    card.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0.5rem 0',borderTop:'1.5px solid var(--border)',marginTop:'0.2rem'}},
-      h('div',null,
-        h('span',{style:{fontSize:'0.82rem',fontWeight:500}},'All areas combined'),
-        h('span',{style:{fontSize:'0.66rem',color:'var(--positive)',fontWeight:500,marginLeft:'0.4rem'}},'−'+Math.round(totalSv*10)/10+' strokes')),
-      h('div',{style:{textAlign:'right'}},
-        h('div',{style:{fontSize:'1.15rem',fontWeight:600,fontFamily:'var(--font-display)',color:'var(--positive)'}},bs+' ('+(bd>=0?'+':'')+bd+')'),
-        h('div',{style:{fontSize:'0.55rem',color:'var(--fg3)'}},'best case'))
-    ));
-  }
-  el.appendChild(card);
+  const rows=perMetric.map(r=>{
+    const hR=Math.round(r.h*10)/10;
+    const plays = hR<=0?'scratch+':hR.toFixed(1);
+    return `<div class="mrow">
+      <div class="mname">${METRIC_LABELS[r.m]}<small>weight ×${r.w}</small></div>
+      <div class="track">
+        <div class="scale"><span>0</span><span>4</span><span>8</span><span>12</span><span>16</span><span>20</span></div>
+        <div class="pin" style="left:${pinPct(r.h)}%"></div>
+      </div>
+      <div class="mval">${fmtVal(r.m,r.v)} <small>· ${plays}</small></div>
+    </div>`;
+  }).join('');
+  const estLabel = est<=0?'scratch or better':estR.toFixed(1);
+  el.innerHTML = `
+    <div class="head">
+      <div>
+        <div class="lbl">This round played to a</div>
+        <div class="big">${estLabel}</div>
+      </div>
+      <div class="chk ${checkpoint?'hit':'away'}">${checkpoint?'✓ 4-hcp checkpoint':`${(est-4).toFixed(1)} above the 4 checkpoint`}</div>
+      <div class="note">Each pin marks the handicap tier that metric resembled. GIR and scrambling are weighted heaviest — GIR is the strongest single predictor of handicap.</div>
+    </div>
+    <div class="rows">${rows}</div>`;
 }
 
-function rI(i){return h('div',{class:`card ic ${i.p}`},
-  h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'start',marginBottom:'0.15rem'}},
-    h('div',{style:{display:'flex',gap:'0.35rem',alignItems:'center'}},
-      h('span',{class:'ip',style:{background:i.p==='high'?'var(--danger-light)':i.p==='positive'?'var(--positive-light)':'var(--warn-light)',color:i.p==='high'?'var(--danger)':i.p==='positive'?'var(--positive)':'var(--warn)'}},i.p==='positive'?'up':i.p),
-      h('span',{style:{fontSize:'0.64rem',color:'var(--fg3)'}},i.a)),
-    i.im>0?h('span',{style:{fontSize:'0.64rem',color:'var(--danger)',fontWeight:600}},'~'+i.im):null),
-  h('div',{style:{fontSize:'0.84rem',fontWeight:500,margin:'0.2rem 0'}},i.t),
-  h('div',{style:{fontSize:'0.74rem',color:'var(--fg2)',lineHeight:1.45}},i.d),
-  i.dr?h('div',{style:{background:'var(--bg2)',borderRadius:'var(--radius)',padding:'0.4rem 0.65rem',fontSize:'0.7rem',lineHeight:1.45,marginTop:'0.3rem'}},h('b',{style:{color:'var(--accent)'}},'Drill: '),i.dr):null)}
-
-function rSC(el,rd,st){const cd=h('div',{class:'card',style:{overflowX:'auto',marginBottom:'0.5rem'}});cd.appendChild(h('div',{class:'st'},'Scorecard'));
-  const tb=h('table',{class:'sct'});const hr=h('tr');hr.appendChild(h('th',{class:'rl'},''));
-  rd.holes.forEach((_,i)=>hr.appendChild(h('th',null,String(i+1))));hr.appendChild(h('th',null,'Tot'));
-  tb.appendChild(h('thead',null,hr));const tbody=h('tbody');
-  const pr=h('tr');pr.appendChild(h('td',{class:'rl'},'Par'));rd.holes.forEach(x=>pr.appendChild(h('td',null,String(x.par))));pr.appendChild(h('td',{style:{fontWeight:600}},String(st.tp)));tbody.appendChild(pr);
-  const sr=h('tr');sr.appendChild(h('td',{class:'rl'},'Score'));rd.holes.forEach(x=>{const s=x.shots?x.shots.length:(x.score||0),d=s-x.par;
-    sr.appendChild(h('td',null,h('span',{class:'sp',style:{background:s>0?sc(d):'transparent',color:s>0?'#fff':'var(--fg3)'}},s||'–')))});
-  sr.appendChild(h('td',{style:{fontWeight:600}},String(st.ts)));tbody.appendChild(sr);
-  const pur=h('tr');pur.appendChild(h('td',{class:'rl'},'Putts'));rd.holes.forEach(x=>{const p=(x.shots||[]).filter(s=>s.club==='Putter').length;
-    pur.appendChild(h('td',{style:{color:p>=3?'var(--danger)':'var(--fg3)'}},p||'–'))});
-  pur.appendChild(h('td',{style:{fontWeight:600}},String(st.pu)));tbody.appendChild(pur);
-  tb.appendChild(tbody);cd.appendChild(tb);el.appendChild(cd)}
-
-function rH(el){if(S.rounds.length<2)return;el.appendChild(h('div',{class:'st',style:{marginTop:'0.8rem'}},'History'));
-  const cd=h('div',{class:'card'});
-  const hd=h('div',{class:'hr'});hd.append(h('div',{style:{fontWeight:500,color:'var(--fg3)',fontSize:'0.56rem',textTransform:'uppercase'}},'Round'),
-    h('div',{style:{textAlign:'center',color:'var(--fg3)',fontSize:'0.56rem',fontWeight:500}},'Score'),h('div',{style:{textAlign:'center',color:'var(--fg3)',fontSize:'0.56rem'}},'FW'),
-    h('div',{style:{textAlign:'center',color:'var(--fg3)',fontSize:'0.56rem'}},'GIR'),h('div',{style:{textAlign:'center',color:'var(--fg3)',fontSize:'0.56rem'}},'IQ'));
-  cd.appendChild(hd);
-  S.rounds.slice().reverse().forEach(r=>{const s=analyze(r),sc2=scoreRound(r);
-    cd.appendChild(h('div',{class:'hr',style:{cursor:'pointer'},onClick:()=>{S.sri=r.id;S.av='single';render()}},
-      h('div',{style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontWeight:S.sri===r.id?500:400,color:S.sri===r.id?'var(--fg)':'var(--fg2)'}},r.date+' — '+r.courseName+(r.courseTees?' ('+r.courseTees+')':'')),
-      h('div',{style:{textAlign:'center',fontWeight:500}},s.ts+' ('+(s.diff>=0?'+':'')+s.diff+')'),
-      h('div',{style:{textAlign:'center'}},s.fwP+'%'),h('div',{style:{textAlign:'center'}},s.girP+'%'),
-      h('div',{style:{textAlign:'center',fontWeight:600,color:scoreColor100(sc2.overall)}},sc2.overall!==null?String(sc2.overall):'—')))});
-  el.appendChild(cd)}
-
-// ─── GOALS & DRILLS ───────────────────
-const DRILL_DB={
-  driving_slice:{title:'Fix the slice — ground force & path',area:'Driving',
-    drill:'@theforceplateguy (Michael Dutro): The slice comes from an over-the-top move caused by poor pressure shift. Focus on loading the trail foot in the backswing, then shifting pressure to the lead foot BEFORE the arms start down. This creates space for an inside path. Feel the ground push — the swing is a reaction to how you use the ground.',
-    source:'@dannymaude (Danny Maude): Grip check — you should see 2.5–3 knuckles on your lead hand. A weak grip forces the face open. Also try the Catapult Method: feel like you\'re slinging the club from the inside, letting centrifugal force square the face rather than steering with your hands.',
-    freq:'2x per week, 15 min'},
-  driving_hook:{title:'Tame the hook — trail arm control',area:'Driving',
-    drill:'Pete Cowen trail arm method: the trail arm controls the clubface through impact. Practice half swings feeling the trail arm stay in front of your body through the hitting zone. The feel is the right elbow stays close to the right hip. This prevents the face from closing too quickly.',
-    source:'@dannymaude (Danny Maude): Hold-off release drill — hit half shots where the toe does NOT pass the heel through impact. Feel the face pointing at the target longer. Also check ball position — too far back promotes an in-to-out path that exaggerates hooks.',
-    freq:'2x per week, 15 min'},
-  driving_accuracy:{title:'Find more fairways — body-arms sync',area:'Driving',
-    drill:'@dannymaude (Danny Maude) Screw Drill: imagine screws under each armpit connecting your arms to your body. Set up with club in front like it\'s resting on a table. Swing back and through feeling the arms stay connected to the body turn. This eliminates the arms running away from the body, which is the #1 cause of inconsistency off the tee.',
-    source:'@theforceplateguy (Michael Dutro): The golf swing is a human making a motion on planet earth — understand the cause-and-effect. Your pressure pattern determines your path. Practice feeling pressure move from center to trail foot to lead foot in sequence. When the sequence is right, the club drops into the slot naturally.',
-    freq:'Every range session, 10 min'},
-  driving_distance:{title:'Add distance — ground reaction forces',area:'Driving',
-    drill:'@theforceplateguy (Michael Dutro): Speed comes from the ground up. Push into the lead foot to start the downswing — this creates vertical force that translates to rotational speed. Practice jumping drills: swing to the top, then push hard off the ground as you start down. Your feet should feel light at impact. Tour players generate 150%+ body weight in vertical force.',
-    source:'@dannymaude (Danny Maude) Catapult Method: create a wide backswing arc, then feel the club "catapult" through impact using centrifugal force. The key is to stop trying to hit — let the speed happen by releasing tension in the hands and wrists. The body rotation is the engine, the arms are along for the ride.',
-    freq:'3x per week, 10 min'},
-  iron_distance:{title:'Iron compression — V-Drill',area:'Irons',
-    drill:'@dannymaude (Danny Maude) V-Drill for iron compression: place an alignment stick at ~30 degrees on the ground. Swing the shaft to match the stick on the backswing side, then pull the butt of the club around so the shaft matches the stick on the follow-through side. This creates a V-shape path that ensures hands are ahead at impact for solid compression. Start with 9 iron half-shots.',
-    source:'Pete Cowen right arm technique: on the downswing, feel the trail arm straighten toward the ball while the body rotates open. This creates the "covering" move that compresses the ball. The trail elbow should point at the trail hip, not behind you.',
-    freq:'1x per week per club, 15 min'},
-  iron_accuracy:{title:'Tighten iron dispersion — face-to-path',area:'Irons',
-    drill:'@theforceplateguy (Michael Dutro): A functional face-to-path relationship is the bottom line of every golf swing. Stop thinking about positions and start measuring your face angle at impact relative to your swing path. Use impact tape or foot spray on the face to check strike location. Center contact with a square face = straight shots. Focus on the CAUSE (pressure pattern, grip) not the EFFECT (ball flight).',
-    source:'@dannymaude (Danny Maude): The painting drill — imagine you have paint on the clubhead. On the downswing, paint a line from inside to along the target line. If you slice, paint more to the right. If you hook, paint more to the left. This gives your brain a visual target for the club path rather than thinking about 10 mechanical positions.',
-    freq:'1x per week, 20 min'},
-  iron_short_miss:{title:'Stop leaving irons short — commit to distance',area:'Irons',
-    drill:'Pete Cowen: Most amateurs decelerate through impact because they\'re afraid of going long. The trail arm should ACCELERATE through the ball. Feel the right arm straighten and extend toward the target after impact. Also: take one more club and make a smooth 85% swing — smooth swings with more club produce better contact, more consistent distance, and actually more spin.',
-    source:'@theforceplateguy: Check your ground pressure at impact. If you\'re falling backward (pressure on trail foot), you\'re losing compression and distance. At impact, 80%+ of your pressure should be on the lead foot. Practice hitting with a towel under your trail foot — if the towel slides out, your weight shift is correct.',
-    freq:'On course, every round for 3 rounds'},
-  shortgame_proximity:{title:'Stock chip shot — two families',area:'Short game',
-    drill:'@shortgamechef (Parker McLachlin): There are two families of short game shots. Family 1 (chips/pitches) uses a putting-stroke motion — body rotation is the engine, minimal wrist action, trail hand dominant. Family 2 (flops/bunkers) uses wrist hinge. For most shots around the green, Family 1 is all you need. Practice hitting 6 chips with a PW from the fringe — goal is all 6 inside 8 feet. Lower loft = more confidence and consistency.',
-    source:'@josephmayogolf (Joseph Mayo): Control your low point and angle of attack. The club should contact the ground at or slightly past the ball — never behind it. Focus on getting your body moving "left" (toward the target) through impact. This naturally creates a descending blow without manipulating your hands. Viktor Hovland\'s short game transformation came from this concept.',
-    freq:'2x per week, 20 min'},
-  shortgame_bunker:{title:'Modern bunker play — use the bounce',area:'Short game',
-    drill:'@shortgamechef (Parker McLachlin): Modern bunker technique — open the face and present MORE loft at impact, not less. Search for a shallow angle of attack so you engage the bounce of the club. Don\'t dig — splash. Make an aggressive swing through the sand. The ball rides out on the cushion of sand. Practice 20 swings with no ball first to build confidence with the splash motion.',
-    source:'@josephmayogolf (Joseph Mayo): The key to bunker play is the same as chipping — control your low point. The club enters the sand 1-2 inches behind the ball. Practice drawing a line in the sand and hitting that line consistently. Once you can hit the same spot 10 times in a row, add a ball.',
-    freq:'1x per week, 15 min'},
-  shortgame_distance_control:{title:'Wedge distance control — backswing length system',area:'Short game',
-    drill:'@shortgamechef (Parker McLachlin): Build a stock distance system using backswing length, not effort. With your W56, hit shots at three backswing lengths: hip height (30-40 yds), chest height (50-60 yds), full (75-85 yds). Chart your carry distances. The key: always accelerate through — never decelerate to control distance. The backswing length IS the throttle. Pick a specific landing spot, not a total distance.',
-    source:'@josephmayogolf (Joseph Mayo): Use the Vertical Swing Plane concept for wedges — a steeper angle of attack (~7-12 degrees) creates more friction at impact, producing higher spin and more predictable stopping distance. Let the loft and the strike do the work. Don\'t try to help the ball up.',
-    freq:'2x per week, 15 min'},
-  putting_lag:{title:'Eliminate three-putts — speed is king',area:'Putting',
-    drill:'@philkenyonputting (Phil Kenyon): Speed control is one of the three fundamental putting skills. Drill: "Hole 100 feet worth of putts" — putt from 20, 25, 30, 35, 40 feet (totals ~150 ft). Every putt must finish within 3 feet of the hole. Focus ONLY on speed, not line. The key insight: speed and break are connected. Faster putts break less, slower putts break more. Most amateurs hit lag putts too hard, then underread the break.',
-    source:'@philkenyonputting: Perception vs Reality test — from 30 feet, hit 5 putts trying to stop them at the hole. Then measure where they actually stopped. Most golfers leave lag putts 3-6 feet short because their perception of "hole speed" is wrong. Recalibrate by putting to the fringe — learn your maximum speed, then dial back.',
-    freq:'Before every round, 10 min'},
-  putting_short:{title:'Start line mastery — gate drill',area:'Putting',
-    drill:'@philkenyonputting (Phil Kenyon): Start line is the #1 fundamental. If you can\'t start the ball on your intended line, everything else breaks down. Gate drill (used by Justin Rose, Tommy Fleetwood, Henrik Stenson): place two tees just wider than your putter head, 5 feet from the hole on a straight putt. Hit 10 putts through the gate. Track your miss tendency — does the ball miss left or right of the gate? This reveals your stroke bias.',
-    source:'@philkenyonputting: Once you know your bias, you can compensate in your aim. Most golfers aim where they THINK they\'re aimed, but perception doesn\'t match reality. Set up to a straight putt, close your eyes, then open them — where is your putter actually pointing? Phil has found that most amateurs aim 2-3 degrees off without knowing it.',
-    freq:'2x per week, 15 min'},
-  putting_read:{title:'Green reading — feel the slope',area:'Putting',
-    drill:'@philkenyonputting (Phil Kenyon): Green reading is the third fundamental. Walk around the putt — don\'t just read from behind the ball. Feel the slope with your feet. The lowest point of the area around the hole tells you the dominant break direction. From 15 feet on a breaking putt, hit 3 balls at 3 different speeds: firm (less break), dying (max break), medium. This teaches that speed determines the line, not the other way around.',
-    source:'@philkenyonputting: "Whatever techniques you work on, you must master three skills: starting direction, speed control, and break prediction. Every player is different — find what works for YOUR stroke and YOUR eyes." Simplifying green reading to one key variable (is it uphill or downhill, left-to-right or right-to-left) reduces decision paralysis on the course.',
-    freq:'On course, every round'},
-  course_mgmt_penalties:{title:'Eliminate penalty strokes — smart targets',area:'Course management',
-    drill:'Safe miss strategy: before every shot near a hazard, identify the trouble and aim to the opposite side. Accept that bogey is a good score from trouble — hero shots lead to doubles. On the range, practice hitting your bail-out club (hybrid or 5 iron) to a safe target. Decision tree: can you clear the hazard 90% of the time? If not, lay up.',
-    source:'@dannymaude: Course management is about playing the percentages. Aim for the center of the green, not the flag. PGA Tour pros aim at the pin only 30% of the time. On par 5s, reaching in 3 to the middle of the green beats a risky 2nd shot into water every time.',
-    freq:'On course, every round'},
-  course_mgmt_scoring:{title:'Better scoring decisions',area:'Course management',
-    drill:'Par is your friend: on par 5s, aim center-green in 3. On tough par 4s, fairway wood off the tee + full iron to the center is smarter than driver into trouble. Track "conservative" rounds vs "aggressive" rounds and compare scores.',
-    source:'@theforceplateguy (Michael Dutro): Understand your actual distances — not your best-case distances. Your stock 7-iron is the AVERAGE of 10 shots, not the one that went furthest. Playing to your average eliminates 2-3 penalty situations per round.',
-    freq:'On course strategy'},
-  shape_slice:{title:'Fix the slice — inside path with ground force',area:'Shot shape',
-    drill:'@theforceplateguy (Michael Dutro): The slice is caused by an over-the-top move, which is caused by poor pressure shift. If pressure stays on the trail foot too long, the arms outrace the body and the club comes over the top. Drill: hit 20 half-swing 7-irons focusing ONLY on shifting pressure to the lead foot before the arms start down. The path will naturally shallow.',
-    source:'@dannymaude: Grip strength is crucial. Check that you see 2.5-3 knuckles on your lead hand. A simple grip change fixes more slices than any swing thought. Also: the Catapult sling feel — let the club release from the inside rather than steering it with the hands.',
-    freq:'3x per week, 15 min'},
-  shape_hook:{title:'Fix the hook — Pete Cowen trail arm',area:'Shot shape',
-    drill:'Pete Cowen: The hook comes from excessive face closure. The trail arm is the key — feel it stay in front of your body through impact, elbow close to the hip. This prevents the forearms from rolling over too quickly. Practice half shots with a 7-iron where the clubface stays "looking at the target" longer through impact.',
-    source:'@dannymaude: Check ball position — too far back promotes an in-to-out path that exaggerates hooks. Move the ball slightly forward. Also try weakening the trail hand grip by rotating it slightly counterclockwise — this naturally reduces face closure at impact.',
-    freq:'2x per week, 15 min'},
-};
-
-function analyzeGoals(){
-  const fr=getFilteredRounds();
-  if(!fr.length)return{areas:[],clubWeaknesses:[],missPatterns:[]};
-  const allScored=fr.map(r=>scoreRound(r));
-  const allAnalyzed=fr.map(r=>analyze(r));
-
-  // Aggregate category scores
-  const catTotals={driving:{scores:[],count:0},irons:{scores:[],count:0},shortGame:{scores:[],count:0},putting:{scores:[],count:0}};
-  allScored.forEach(rs=>{
-    ['driving','irons','shortGame','putting'].forEach(cat=>{
-      if(rs[cat].score!==null){catTotals[cat].scores.push(rs[cat].score);catTotals[cat].count+=rs[cat].count}});
-  });
-  const catAvg={};
-  Object.entries(catTotals).forEach(([k,v])=>{catAvg[k]=v.scores.length?Math.round(v.scores.reduce((s,x)=>s+x,0)/v.scores.length):null});
-
-  // Club-level scores
-  const clubAgg={};
-  allScored.forEach(rs=>{rs.allScores.forEach(s=>{
-    const c=s.shot.club;if(!clubAgg[c])clubAgg[c]={scores:[],count:0};
-    clubAgg[c].scores.push(s.total);clubAgg[c].count++})});
-  const clubAvgs=Object.entries(clubAgg).map(([club,d])=>({
-    club,avg:Math.round(d.scores.reduce((s,v)=>s+v,0)/d.scores.length),count:d.count
-  })).filter(c=>c.count>=3).sort((a,b)=>a.avg-b.avg);
-
-  // Miss patterns
-  const missAgg={driveMiss:{},approachMiss:{},shapeIssues:{},puttIssues:{threePutts:0,totalRounds:S.rounds.length}};
-  allAnalyzed.forEach(st=>{
-    Object.entries(st.dm).forEach(([k,v])=>{missAgg.driveMiss[k]=(missAgg.driveMiss[k]||0)+v});
-    Object.entries(st.am).forEach(([k,v])=>{missAgg.approachMiss[k]=(missAgg.approachMiss[k]||0)+v});
-    Object.entries(st.sh).forEach(([k,v])=>{missAgg.shapeIssues[k]=(missAgg.shapeIssues[k]||0)+v});
-    missAgg.puttIssues.threePutts+=st.tp3;
-  });
-
-  // Build top 3 improvement areas with drills
-  const areas=[];
-
-  // Worst category
-  const sortedCats=Object.entries(catAvg).filter(([_,v])=>v!==null).sort((a,b)=>a[1]-b[1]);
-  sortedCats.forEach(([cat,score])=>{
-    if(areas.length>=3)return;
-    let drills=[];
-    if(cat==='driving'){
-      const topMiss=Object.entries(missAgg.driveMiss).sort((a,b)=>b[1]-a[1])[0];
-      const topShape=Object.entries(missAgg.shapeIssues).sort((a,b)=>b[1]-a[1])[0];
-      if(topShape&&['Slice','Push'].includes(topShape[0]))drills.push(DRILL_DB.driving_slice);
-      else if(topShape&&['Hook','Pull'].includes(topShape[0]))drills.push(DRILL_DB.driving_hook);
-      else drills.push(DRILL_DB.driving_accuracy);
-      if(score<50)drills.push(DRILL_DB.driving_distance);
-    }else if(cat==='irons'){
-      const topApproachMiss=Object.entries(missAgg.approachMiss).sort((a,b)=>b[1]-a[1])[0];
-      if(topApproachMiss&&topApproachMiss[0]==='Rough')drills.push(DRILL_DB.iron_accuracy);
-      else drills.push(DRILL_DB.iron_short_miss);
-      drills.push(DRILL_DB.iron_distance);
-    }else if(cat==='shortGame'){
-      const bunkerMisses=(missAgg.approachMiss['Bunker']||0);
-      if(bunkerMisses>=3)drills.push(DRILL_DB.shortgame_bunker);
-      else drills.push(DRILL_DB.shortgame_proximity);
-      drills.push(DRILL_DB.shortgame_distance_control);
-    }else if(cat==='putting'){
-      const avgTP=missAgg.puttIssues.threePutts/Math.max(missAgg.puttIssues.totalRounds,1);
-      if(avgTP>=2)drills.push(DRILL_DB.putting_lag);
-      else drills.push(DRILL_DB.putting_short);
-      drills.push(DRILL_DB.putting_read);
-    }
-    areas.push({cat,catLabel:{driving:'Driving',irons:'Irons',shortGame:'Short game',putting:'Putting'}[cat],score,drills});
-  });
-
-  // Add course management if penalties are high
-  const avgPen=allAnalyzed.reduce((s,a)=>s+a.pen,0)/allAnalyzed.length;
-  if(avgPen>=1.5&&areas.length<4){
-    areas.push({cat:'management',catLabel:'Course management',score:Math.round(Math.max(0,100-avgPen*25)),
-      drills:[DRILL_DB.course_mgmt_penalties,DRILL_DB.course_mgmt_scoring]});
-  }
-
-  // Add shape fix if dominant
-  const topShape=Object.entries(missAgg.shapeIssues).sort((a,b)=>b[1]-a[1])[0];
-  if(topShape&&topShape[1]>=5&&areas.length<4){
-    const drill=topShape[0]==='Slice'||topShape[0]==='Push'?DRILL_DB.shape_slice:DRILL_DB.shape_hook;
-    areas.push({cat:'shape',catLabel:'Shot shape ('+topShape[0]+')',score:Math.round(Math.max(0,100-topShape[1]*5)),drills:[drill]});
-  }
-
-  return{areas:areas.slice(0,3),clubWeaknesses:clubAvgs.slice(0,5),missPatterns:missAgg};
+function renderVerdict(s){
+  const el=document.getElementById('verdict');
+  if(!s.filled){el.textContent='Start entering scores and your round verdict appears here.';return;}
+  const met=[]; const missed=[];
+  (s.gir>=GOAL.gir?met:missed).push('GIR');
+  (s.putts<=GOAL.putts?met:missed).push('putts');
+  if(s.scrOpp){(s.scramble>=GOAL.scramble?met:missed).push('scrambling');}
+  if(s.p6att){(s.p6>=GOAL.p6?met:missed).push('6ft putts');}
+  (s.threeP<=GOAL.threeP?met:missed).push('three-putts');
+  (s.dbl===0?met:missed).push('doubles');
+  const totalGoals = 5 + (s.scrOpp?0:0); // base 5 always shown; scrambling+p6 conditional
+  const tracked = 4 + (s.scrOpp?1:0) + (s.p6att?1:0); // goals actually evaluable this round
+  // biggest leak
+  let leak='';
+  if(s.dbl>0) leak=`Eliminating today's ${s.dbl} double${s.dbl>1?'s':''} alone would cut ${s.dbl*2}+ strokes — that's the fastest line to a 4.`;
+  else if(s.threeP>GOAL.threeP) leak=`${s.threeP} three-putts is over the ≤1 target; lag putting is pure stroke savings.`;
+  else if(s.p6att&&s.p6<GOAL.p6) leak=`The 6-footers are leaking — ${s.p6.toFixed(0)}% made vs the 70% target. That's where par saves live.`;
+  else if(s.gir<GOAL.gir) leak=`Approach play is the gap — you're ${(GOAL.gir-s.gir).toFixed(0)} points under the 50% GIR target (scratch is 57%).`;
+  else if(s.scrOpp&&s.scramble<GOAL.scramble) leak=`Short game is the swing factor — scrambling at ${s.scramble.toFixed(0)}% vs the 40% target (scratch is 50%).`;
+  else leak=`Clean card. Repeat this and the index falls on its own — scratch is the next rung.`;
+  el.innerHTML = `<b>${met.length}/${tracked} goals met.</b> ${met.length?'Held: '+met.join(', ')+'. ':''}${missed.length?'Chasing: '+missed.join(', ')+'. ':''}<br>${leak}`;
 }
 
-function rGoals(el){
-  const fr=getFilteredRounds();
-  if(!fr.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},S.rounds.length?'No rounds for this player.':'Enter rounds to generate improvement goals.'));renderPlayerFilter(el);return}
-  renderPlayerFilter(el);
-
-  const goals=analyzeGoals();
-
-  el.appendChild(h('div',{class:'st'},'Top 3 areas to improve'));
-  el.appendChild(h('div',{style:{fontSize:'0.74rem',color:'var(--fg2)',marginBottom:'1rem',lineHeight:1.5}},
-    `Based on ${S.rounds.length} round${S.rounds.length>1?'s':''}, here are your highest-impact improvement areas with targeted practice drills.`));
-
-  goals.areas.forEach((area,idx)=>{
-    const card=h('div',{class:'card',style:{marginBottom:'0.85rem',borderLeft:`3px solid ${area.score<40?'var(--danger)':area.score<60?'var(--warn)':'var(--info)'}`,borderRadius:'0 var(--radius-lg) var(--radius-lg) 0'}});
-
-    // Header
-    card.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'0.6rem'}},
-      h('div',{style:{display:'flex',alignItems:'center',gap:'0.5rem'}},
-        h('span',{style:{width:'26px',height:'26px',borderRadius:'50%',background:'var(--bg2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.72rem',fontWeight:600}},String(idx+1)),
-        h('span',{style:{fontSize:'0.95rem',fontWeight:500}},area.catLabel)),
-      h('div',{style:{display:'flex',alignItems:'center',gap:'0.5rem'}},
-        h('span',{style:{fontSize:'0.62rem',color:'var(--fg3)',textTransform:'uppercase'}},'Score'),
-        h('span',{style:{fontSize:'1.2rem',fontWeight:600,fontFamily:'var(--font-display)',color:scoreColor100(area.score)}},String(area.score)),
-        h('div',{style:{width:'50px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:scoreBarWidth(area.score),background:scoreBarColor(area.score)}})))
-      )
-    ));
-
-    // Drills
-    area.drills.forEach(drill=>{
-      if(!drill)return;
-      const drillEl=h('div',{style:{background:'var(--bg2)',borderRadius:'var(--radius)',padding:'0.75rem 0.9rem',marginBottom:'0.5rem'}});
-      drillEl.appendChild(h('div',{style:{fontWeight:500,fontSize:'0.84rem',marginBottom:'0.35rem',color:'var(--accent)'}},drill.title));
-      drillEl.appendChild(h('div',{style:{fontSize:'0.74rem',color:'var(--fg2)',lineHeight:1.55,marginBottom:'0.35rem'}},drill.drill));
-      drillEl.appendChild(h('div',{style:{fontSize:'0.72rem',color:'var(--fg2)',lineHeight:1.5,fontStyle:'italic',marginBottom:'0.25rem'}},drill.source));
-      drillEl.appendChild(h('div',{style:{fontSize:'0.62rem',color:'var(--fg3)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.04em'}},'Frequency: '+drill.freq));
-      card.appendChild(drillEl);
-    });
-    el.appendChild(card);
-  });
-
-  // Weakest clubs
-  if(goals.clubWeaknesses.length>0){
-    el.appendChild(h('div',{class:'st',style:{marginTop:'0.75rem'}},'Weakest performing clubs'));
-    const tbl=h('div',{class:'card'});
-    goals.clubWeaknesses.forEach(cw=>{
-      tbl.appendChild(h('div',{class:'score-section'},
-        h('div',{class:'score-info'},
-          h('div',{class:'score-club-name'},cw.club),
-          h('div',{class:'score-club-detail'},cw.count+' total shots'+(PGA_CARRY[cw.club]?' · PGA benchmark: '+PGA_CARRY[cw.club]+'y':''))),
-        h('div',{class:'score-value',style:{color:scoreColor100(cw.avg)}},String(cw.avg)),
-        h('div',{style:{width:'70px'}},h('div',{class:'score-bar'},h('div',{class:'score-fill',style:{width:scoreBarWidth(cw.avg),background:scoreBarColor(cw.avg)}})))
-      ));
-    });
-    el.appendChild(tbl);
-  }
-
-  // Miss patterns summary
-  const mp=goals.missPatterns;
-  const topDM=Object.entries(mp.driveMiss).sort((a,b)=>b[1]-a[1]).slice(0,3);
-  const topAM=Object.entries(mp.approachMiss).sort((a,b)=>b[1]-a[1]).slice(0,3);
-  const topSH=Object.entries(mp.shapeIssues).sort((a,b)=>b[1]-a[1]).slice(0,3);
-
-  if(topDM.length||topAM.length||topSH.length){
-    el.appendChild(h('div',{class:'st',style:{marginTop:'0.75rem'}},'Miss patterns'));
-    const patCard=h('div',{class:'card'});
-
-    if(topDM.length){
-      patCard.appendChild(h('div',{style:{fontSize:'0.68rem',fontWeight:500,color:'var(--fg3)',textTransform:'uppercase',marginBottom:'0.3rem'}},'Drives missing to'));
-      patCard.appendChild(h('div',{style:{display:'flex',gap:'0.3rem',flexWrap:'wrap',marginBottom:'0.6rem'}},
-        ...topDM.map(([k,v])=>h('span',{class:'ct',style:{fontSize:'0.7rem'}},k+': '+v+'x'))));
-    }
-    if(topAM.length){
-      patCard.appendChild(h('div',{style:{fontSize:'0.68rem',fontWeight:500,color:'var(--fg3)',textTransform:'uppercase',marginBottom:'0.3rem'}},'Approaches ending in'));
-      patCard.appendChild(h('div',{style:{display:'flex',gap:'0.3rem',flexWrap:'wrap',marginBottom:'0.6rem'}},
-        ...topAM.map(([k,v])=>h('span',{class:'ct',style:{fontSize:'0.7rem'}},k+': '+v+'x'))));
-    }
-    if(topSH.length){
-      patCard.appendChild(h('div',{style:{fontSize:'0.68rem',fontWeight:500,color:'var(--fg3)',textTransform:'uppercase',marginBottom:'0.3rem'}},'Dominant miss shapes'));
-      patCard.appendChild(h('div',{style:{display:'flex',gap:'0.3rem',flexWrap:'wrap'}},
-        ...topSH.map(([k,v])=>h('span',{class:'ct',style:{fontSize:'0.7rem'}},k+': '+v+'x'))));
-    }
-    el.appendChild(patCard);
-  }
-
-  // Practice schedule suggestion
-  el.appendChild(h('div',{class:'st',style:{marginTop:'0.75rem'}},'Suggested weekly practice'));
-  const schedCard=h('div',{class:'card'});
-  const schedule=[];
-  if(goals.areas[0])schedule.push({day:'Session 1',focus:goals.areas[0].catLabel,time:'20 min',detail:goals.areas[0].drills[0]?.title||'Work on weakest area'});
-  if(goals.areas[1])schedule.push({day:'Session 2',focus:goals.areas[1].catLabel,time:'20 min',detail:goals.areas[1].drills[0]?.title||'Work on second area'});
-  if(goals.areas[2])schedule.push({day:'Session 3',focus:goals.areas[2].catLabel,time:'15 min',detail:goals.areas[2].drills[0]?.title||'Work on third area'});
-  schedule.push({day:'Pre-round',focus:'Putting + tempo',time:'15 min',detail:'Ladder drill for lag, then 10 putts from 4 feet for confidence'});
-
-  schedule.forEach(s=>{
-    schedCard.appendChild(h('div',{style:{display:'flex',alignItems:'center',gap:'0.7rem',padding:'0.45rem 0',borderBottom:'0.5px solid var(--border)'}},
-      h('div',{style:{minWidth:'70px',fontSize:'0.68rem',fontWeight:500,color:'var(--accent)'}},s.day),
-      h('div',{style:{flex:1}},
-        h('div',{style:{fontSize:'0.78rem',fontWeight:500}},s.focus),
-        h('div',{style:{fontSize:'0.66rem',color:'var(--fg3)'}},s.detail)),
-      h('div',{style:{fontSize:'0.66rem',color:'var(--fg3)',minWidth:'40px',textAlign:'right'}},s.time)
-    ));
-  });
-  el.appendChild(schedCard);
+/* ---------- persistence ---------- */
+async function saveRound(){
+  const s=stats();
+  if(!s.filled){alert('Enter at least one hole before saving.');return;}
+  const rec={
+    id:'r_'+Date.now(),
+    golfer:(document.getElementById('m-golfer').value||'').trim()||'Unnamed',
+    course:document.getElementById('m-course').value||'Untitled course',
+    tees:document.getElementById('m-tees').value||'',
+    date:document.getElementById('m-date').value||new Date().toISOString().slice(0,10),
+    holes:JSON.parse(JSON.stringify(holes)),
+    summary:{score:s.score,toPar:s.toPar,gir:+s.gir.toFixed(1),putts:s.putts,scramble:+s.scramble.toFixed(1),threeP:s.threeP,dbl:s.dbl,p6:+s.p6.toFixed(1),p6made:s.p6made,p6att:s.p6att,
+             metricHcp: s.filled>=18 ? +estimateHcp(s).est.toFixed(1) : null,
+             goalsMet:[s.gir>=GOAL.gir,s.putts<=GOAL.putts&&s.putts>0,s.scramble>=GOAL.scramble&&s.scrOpp>0,s.p6>=GOAL.p6&&s.p6att>0,s.threeP<=GOAL.threeP,s.dbl===0]}
+  };
+  try{
+    await window.storage.set('round:'+rec.id, JSON.stringify(rec));
+    flash('saveBtn','Saved ✓');
+    loadHistory();
+  }catch(err){ alert('Could not save: '+err); }
 }
 
-// ─── ROUNDS ────────────────────────────
-function rR(el){if(!S.rounds.length){el.appendChild(h('div',{class:'card',style:{textAlign:'center',padding:'2rem',color:'var(--fg3)'}},'No rounds yet.'));return}
-  renderPlayerFilter(el);
-  const fr=getFilteredRounds();
-  el.appendChild(h('div',{class:'st'},`${fr.length} round${fr.length!==1?'s':''}`));
-  fr.slice().reverse().forEach(r=>{const s=analyze(r),sc2=scoreRound(r),c=r.conditions,tags=[];
-    if(c){if(c.greens)tags.push(c.greens);if(c.weather)c.weather.forEach(w=>tags.push(w))}
-    el.appendChild(h('div',{class:'card',style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0.55rem 0.85rem'}},
-      h('div',null,h('div',{style:{fontWeight:500,fontSize:'0.86rem'}},r.courseName+(r.courseTees?' ('+r.courseTees+')':'')),
-        h('div',{style:{fontSize:'0.68rem',color:'var(--fg3)'}},
-          `${r.date}${r.player?' · '+r.player:''}${r.handicap!=null?' ('+r.handicap+' hdcp)':''} · ${s.ts} (${s.diff>=0?'+':''}${s.diff}) · IQ: `,
-          h('span',{style:{fontWeight:600,color:scoreColor100(sc2.overall)}},sc2.overall!==null?String(sc2.overall):'—')),
-        tags.length?h('div',{style:{display:'flex',gap:'0.2rem',flexWrap:'wrap',marginTop:'0.15rem'}},...tags.map(t=>h('span',{class:'ct'},t))):null),
-      h('div',{style:{display:'flex',gap:'0.3rem'}},
-        h('button',{class:'btn s',onClick:()=>{S.sri=r.id;S.tab='scores';S.av='single';render()}},'Scores'),
-        h('button',{class:'btn s',onClick:()=>{S.sri=r.id;S.tab='analysis';render()}},'Stats'),
-        h('button',{class:'btn s d',onClick:()=>{if(confirm('Delete?')){S.rounds=S.rounds.filter(x=>x.id!==r.id);sv();render()}}},'Del'))));
-  })}
+let ALL_ROUNDS=[];
 
-function xp(){const b=new Blob([DB.exp()],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='fairway-iq-'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(a.href);toast('Exported')}
-$('#fi').addEventListener('change',function(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
-  r.onload=ev=>{try{const res=DB.imp(ev.target.result);S.courses=DB.g('courses')||[];S.rounds=DB.g('rounds')||[];
-    toast(`Imported: ${res.courses} courses, ${res.rounds} rounds`);render()}catch(err){toast('Error: '+err.message)}};r.readAsText(f);this.value=''});
+async function loadHistory(){
+  const list=document.getElementById('historyList');
+  let keys=[];
+  try{ const r=await window.storage.list('round:'); keys=r&&r.keys?r.keys:[]; }
+  catch(e){ keys=[]; }
+  if(!keys.length){ ALL_ROUNDS=[]; list.innerHTML='<div class="empty">No rounds saved yet. Your progress toward the goals will trend here.</div>'; document.getElementById('trend').textContent=''; populateGolfers([]); return; }
+  const recs=[];
+  for(const k of keys){
+    try{ const v=await window.storage.get(k); if(v&&v.value) recs.push(JSON.parse(v.value)); }catch(e){}
+  }
+  recs.sort((a,b)=> (b.date+b.id).localeCompare(a.date+a.id));
+  ALL_ROUNDS=recs;
+  populateGolfers(recs);
+  renderHistory();
+}
 
-render();
-</script></body></html>
+function golferOf(r){ return r.golfer||'Unnamed'; }
+
+function populateGolfers(recs){
+  const names=[...new Set(recs.map(golferOf))].sort((a,b)=>a.localeCompare(b));
+  const sel=document.getElementById('filter-golfer');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">All golfers</option>'+names.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  if(names.includes(cur)) sel.value=cur;
+  // datalist for the entry field (autocomplete known golfers)
+  const dl=document.getElementById('golfer-names');
+  if(dl) dl.innerHTML=names.map(n=>`<option value="${escapeHtml(n)}">`).join('');
+}
+
+function renderHistory(){
+  const list=document.getElementById('historyList');
+  const filter=document.getElementById('filter-golfer').value;
+  const recs = filter? ALL_ROUNDS.filter(r=>golferOf(r)===filter) : ALL_ROUNDS;
+  const multiGolfer = new Set(ALL_ROUNDS.map(golferOf)).size>1;
+  if(!recs.length){ list.innerHTML='<div class="empty">No rounds for this golfer yet.</div>'; document.getElementById('trend').textContent=''; return; }
+  list.innerHTML = recs.map(r=>{
+    const m=r.summary.goalsMet||[];
+    const dots=m.map(x=>`<span class="${x?'y':''}"></span>`).join('');
+    const tp=r.summary.toPar;
+    const mh=r.summary.metricHcp;
+    const mhBadge = (mh!=null) ? `<span class="hbadge" title="Metric-based handicap for this round">${mh<=0?'0+':mh.toFixed(1)} hcp</span>` : '';
+    const gPill = (multiGolfer && !filter) ? `<span class="golfer-pill">${escapeHtml(golferOf(r))}</span>` : '';
+    return `<div class="rnd">
+      <span class="when">${r.date}</span>
+      <span class="cn">${escapeHtml(r.course)}<div class="mini">${r.tees?escapeHtml(r.tees)+' · ':''}GIR ${r.summary.gir}% · ${r.summary.putts} putts · ${r.summary.p6!=null&&r.summary.p6att?r.summary.p6+'% ≤6ft · ':''}${r.summary.threeP} 3-putt · ${r.summary.dbl} dbl+</div></span>
+      ${gPill}
+      ${mhBadge}
+      <span class="dot5">${dots}</span>
+      <span class="sc">${r.summary.score}<span class="mini"> ${tp>0?'+':''}${tp}</span></span>
+      <button class="fwbtn" title="Delete" data-del="${r.id}" style="width:26px;height:26px">🗑</button>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',async e=>{
+    if(confirm('Delete this round?')){ try{await window.storage.delete('round:'+e.target.dataset.del);}catch(x){} loadHistory(); }
+  }));
+  // trend line over the filtered set
+  const who = filter? escapeHtml(filter) : 'all golfers';
+  const avgGoals=(recs.reduce((a,r)=>a+(r.summary.goalsMet||[]).filter(Boolean).length,0)/recs.length).toFixed(1);
+  const avgScore=Math.round(recs.reduce((a,r)=>a+r.summary.score,0)/recs.length);
+  const mhVals=recs.map(r=>r.summary.metricHcp).filter(v=>v!=null);
+  const avgMh = mhVals.length? (mhVals.reduce((a,v)=>a+v,0)/mhVals.length).toFixed(1):null;
+  document.getElementById('trend').innerHTML=`<b>${recs.length}</b> round${recs.length>1?'s':''} · ${who} · avg <b>${avgScore}</b> strokes${avgMh!=null?` · avg metric handicap <b>${avgMh}</b>`:''} · avg <b>${avgGoals}</b> goals met per round.`;
+}
+
+function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function flash(btnId,txt){const b=document.getElementById(btnId);const o=b.textContent;b.textContent=txt;setTimeout(()=>b.textContent=o,1400);}
+
+document.getElementById('saveBtn').addEventListener('click',saveRound);
+document.getElementById('filter-golfer').addEventListener('change',renderHistory);
+document.getElementById('newBtn').addEventListener('click',()=>{
+  if(confirm('Start a fresh card? Unsaved entries will be cleared. (The golfer name stays.)')){ holes=blankHoles(); document.getElementById('m-course').value=''; document.getElementById('m-tees').value=''; document.getElementById('m-date').value=new Date().toISOString().slice(0,10); buildTable(); recompute(); }
+});
+document.getElementById('clearBtn').addEventListener('click',()=>{
+  if(confirm('Clear all scores on this card?')){ holes.forEach(h=>{h.score='';h.putts='';h.p6made='';h.p6att='';}); buildTable(); recompute(); }
+});
+
+init();
+</script>
+</body>
+</html>
