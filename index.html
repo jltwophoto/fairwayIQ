@@ -245,13 +245,14 @@ const METRIC_LABELS={gir:'GIR %',putts:'Total putts',scramble:'Scrambling %',thr
 // state: per-hole {par, score, putts, p6made, p6att}
 let holes = [];
 function blankHoles(){
-  const defPar=[4,4,3,5,4,4,3,4,5, 4,3,4,5,4,4,3,4,5]; // sensible default, editable
+  const defPar=[4,5,4,3,4,5,3,4,4, 5,4,4,3,4,4,3,5,4]; // White tees, par 72 (today's base course)
   return Array.from({length:HOLES},(_,i)=>({par:defPar[i],score:'',putts:'',p6made:'',p6att:''}));
 }
 
 function init(){
   holes = blankHoles();
   document.getElementById('m-date').value = new Date().toISOString().slice(0,10);
+  if(!document.getElementById('m-tees').value) document.getElementById('m-tees').value = 'White';
   buildTable();
   recompute();
   loadHistory();
